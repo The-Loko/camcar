@@ -43,27 +43,23 @@ class JoystickState extends State<Joystick> {
     });
     widget.onChanged(0, 0);
   }
-  
-  @override
+    @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: GestureDetector(
-        onPanStart: (details) => _updateOffset(details.localPosition),
-        onPanUpdate: (details) => _updateOffset(details.localPosition),
-        onPanEnd: (_) => _resetKnob(),
-        child: Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF1c1c1e), // iOS dark gray background
-            border: Border.all(
-              color: const Color(0xFF38383a), // iOS border color
-              width: 1,
-            ),
+    return GestureDetector(
+      onPanStart: (details) => _updateOffset(details.localPosition),
+      onPanUpdate: (details) => _updateOffset(details.localPosition),
+      onPanEnd: (_) => _resetKnob(),
+      child: Container(
+        width: widget.size,
+        height: widget.size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF1c1c1e), // iOS dark gray background
+          border: Border.all(
+            color: const Color(0xFF38383a), // iOS border color
+            width: 1,
           ),
+        ),
           child: Stack(
             children: [
               Positioned(
@@ -84,8 +80,7 @@ class JoystickState extends State<Joystick> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ),            ],
           ),
         ),
       ),

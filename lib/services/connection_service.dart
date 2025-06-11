@@ -100,8 +100,22 @@ class ConnectionService {
     _connectionStatus = ConnectionStatus.connecting;
     _targetAddress = address;
     
-    try {      // Find the device with the matching address
-      List<fbp.BluetoothDevice> devices = await fbp.FlutterBluePlus.systemDevices;
+    try {
+      Logger.log('Attempting to connect to Bluetooth device: $address');
+      
+      // Check if Bluetooth is enabled
+      bool isSupported = await fbp.FlutterBluePlus.isSupported;
+      if (!isSupported) {
+        throw Exception('Bluetooth is not supported on this device');
+      }
+      
+      bool isOn = await fbp.FlutterBluePlus.isOn;
+      if (!isOn) {
+        throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
+      }
+      
+      // Find the device with the matching address
+      List<fbp.BluetoothDevice> devices = fbp.FlutterBluePlus.systemDevices;
       
       // If device not found, try to discover it
       _bluetoothDevice = devices.firstWhere(
@@ -348,55 +362,82 @@ class ConnectionService {
     } else {
       Logger.log('Read characteristic not available for sensor data');
     }
-  }// Scan for Bluetooth devices
+  }  // Scan for Bluetooth devices
   Future<List<bt_device.BluetoothDevice>> scanBluetoothDevices() async {
     try {
       Logger.log('Starting Bluetooth scan');
       
-      // Request bluetooth permissions first if needed
-      // These permissions are handled by the flutter_blue_plus plugin
+      // Check if Bluetooth is supported and enabled
+      bool isSupported = await fbp.FlutterBluePlus.isSupported;
+      if (!isSupported) {
+        throw Exception('Bluetooth is not supported on this device');
+      }
+      
+      bool isOn = await fbp.FlutterBluePlus.isOn;
+      if (!isOn) {
+        throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
+      }
       
       // Stop any previous scans
       await fbp.FlutterBluePlus.stopScan();
       
-      // Actually scan for real Bluetooth devices with a longer timeout
-      await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 8));
+      // Start fresh scan with longer timeout for better device discovery
+      await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
       
-      // Wait for scan results
-      List<fbp.ScanResult> scanResults = await fbp.FlutterBluePlus.scanResults.first;
+      // Wait for scan results to complete
+      await Future.delayed(const Duration(seconds: 10));
       
-      Logger.log('Raw scan found ${scanResults.length} devices');
+      // Get all discovered devices
+      List<fbp.ScanResult> scanResults = fbp.FlutterBluePlus.scanResults.value;
       
-      // Filter for ESP32 devices first with better matching      var filteredResults = scanResults.where((result) {
+      Logger.log('Bluetooth scan found ${scanResults.length} devices');
+      
+      // Filter for ESP32 devices with comprehensive matching
+      var filteredResults = scanResults.where((result) {
         final deviceName = result.device.platformName.toLowerCase();
         final deviceId = result.device.remoteId.str.toLowerCase();
-        return deviceName.contains('esp') || 
-               deviceName.contains('gyro') || 
-               deviceName.contains('car') ||
-               deviceId.startsWith('24:6f:28') || // Common ESP32 MAC prefix
-               deviceId.startsWith('24:0a:c4') ||
-               deviceId.startsWith('30:ae:a4') ||
-               deviceId.startsWith('8c:aa:b5');
+        
+        // Look for common ESP32 identifiers
+        bool isESP32 = deviceName.contains('esp') || 
+                      deviceName.contains('gyro') || 
+                      deviceName.contains('car') ||
+                      deviceName.contains('bluetooth') ||
+                      deviceName.contains('serial') ||
+                      // Common ESP32 MAC address prefixes
+                      deviceId.startsWith('24:6f:28') || 
+                      deviceId.startsWith('24:0a:c4') ||
+                      deviceId.startsWith('30:ae:a4') ||
+                      deviceId.startsWith('8c:aa:b5') ||
+                      deviceId.startsWith('94:b9:7e') ||
+                      deviceId.startsWith('ac:67:b2');
+                      
+        return isESP32;
       }).toList();
       
       // Sort by RSSI (signal strength) to prioritize nearby devices
       filteredResults.sort((a, b) => b.rssi.compareTo(a.rssi));
       
-      // If no ESP devices found, show all discoverable devices
+      // If no ESP32 devices found, show all discoverable devices but prioritize strong signals
       if (filteredResults.isEmpty) {
-        Logger.log('No ESP32 devices found, showing all devices');
-        filteredResults = scanResults
-          ..sort((a, b) => b.rssi.compareTo(a.rssi));
+        Logger.log('No ESP32 devices found, showing all discovered devices');
+        filteredResults = scanResults.where((result) => 
+          result.device.platformName.isNotEmpty && result.rssi > -100
+        ).toList()
+        ..sort((a, b) => b.rssi.compareTo(a.rssi));
       } else {
         Logger.log('Found ${filteredResults.length} potential ESP32 devices');
       }
-        // Convert to our BluetoothDevice model with additional information
+      
+      // Convert to our BluetoothDevice model with detailed information
       return filteredResults.map((result) {
         final deviceName = result.device.platformName.isNotEmpty 
             ? result.device.platformName 
-            : 'Unknown Device';
-        final signalStrength = result.rssi > -70 ? 'Strong' : 
-                             result.rssi > -90 ? 'Medium' : 'Weak';
+            : 'Unknown Device (${result.device.remoteId.str})';
+            
+        final signalStrength = result.rssi > -60 ? 'Excellent' :
+                             result.rssi > -70 ? 'Good' : 
+                             result.rssi > -80 ? 'Fair' : 
+                             result.rssi > -90 ? 'Poor' : 'Very Poor';
             
         return bt_device.BluetoothDevice(
           name: deviceName,
@@ -405,33 +446,79 @@ class ConnectionService {
           signalStrength: signalStrength,
         );
       }).toList();
+      
     } catch (e) {
       _errorMessage = "Bluetooth scan failed: ${e.toString()}";
       Logger.log('Bluetooth scan error: $_errorMessage');
       return [];
+    } finally {
+      // Ensure scan is stopped
+      await fbp.FlutterBluePlus.stopScan();
     }
   }
-
   // Scan for WiFi networks
   Future<List<WiFiNetwork>> scanWifiNetworks() async {
     try {
+      Logger.log('Starting WiFi scan');
       final wifiScanInstance = wifi_scan.WiFiScan.instance;
+      
+      // Check if we can scan
       final canStartScan = await wifiScanInstance.canStartScan();
-      Logger.log('Can start scan: $canStartScan');
+      Logger.log('Can start WiFi scan: $canStartScan');
       
       if (canStartScan == wifi_scan.CanStartScan.yes) {
+        // Start the scan
         final started = await wifiScanInstance.startScan();
+        Logger.log('WiFi scan started: $started');
+        
         if (started) {
-          Logger.log('Scan started');
-          await Future.delayed(const Duration(seconds: 2));
+          // Wait for scan to complete
+          await Future.delayed(const Duration(seconds: 3));
           
+          // Get scan results
           final accessPoints = await wifiScanInstance.getScannedResults();
           Logger.log('Found ${accessPoints.length} WiFi networks');
-          return accessPoints.map((ap) => WiFiNetwork.fromWiFiAccessPoint(ap)).toList();
+          
+          // Filter and sort networks
+          var filteredNetworks = accessPoints
+              .where((ap) => ap.ssid.isNotEmpty) // Only networks with valid names
+              .toList();
+          
+          // Sort by signal strength (stronger signals first)
+          filteredNetworks.sort((a, b) => b.level.compareTo(a.level));
+          
+          // Convert to our WiFiNetwork model
+          return filteredNetworks.map((ap) => WiFiNetwork.fromWiFiAccessPoint(ap)).toList();
+        } else {
+          Logger.log('Failed to start WiFi scan');
+          return [];
         }
-        Logger.log('Scan result: $started');
+      } else {
+        String reason = '';
+        switch (canStartScan) {
+          case wifi_scan.CanStartScan.notSupported:
+            reason = 'WiFi scanning is not supported on this device';
+            break;
+          case wifi_scan.CanStartScan.noLocationPermissionRequired:
+            reason = 'Location permission required for WiFi scanning';
+            break;
+          case wifi_scan.CanStartScan.noLocationPermissionDenied:
+            reason = 'Location permission denied for WiFi scanning';
+            break;
+          case wifi_scan.CanStartScan.noLocationPermissionUpgradeAccuracy:
+            reason = 'Location permission accuracy needs to be upgraded';
+            break;
+          case wifi_scan.CanStartScan.noLocationServiceDisabled:
+            reason = 'Location services are disabled';
+            break;
+          default:
+            reason = 'Cannot start WiFi scan: $canStartScan';
+        }
+        
+        Logger.log('Cannot scan WiFi: $reason');
+        _errorMessage = reason;
+        return [];
       }
-      return [];
     } catch (e) {
       _errorMessage = "WiFi scan failed: ${e.toString()}";
       Logger.log('WiFi scan error: $_errorMessage');
