@@ -5,6 +5,7 @@ import '../models/control_data.dart';
 import '../models/bluetooth_device.dart';
 import '../models/wifi_network.dart';
 import '../models/sensor_data.dart';
+import '../utils/logger.dart';
 
 class CarControlProvider with ChangeNotifier {
   final GyroscopeService _gyroscopeService = GyroscopeService();
@@ -93,11 +94,71 @@ class CarControlProvider with ChangeNotifier {
     _isAutoMode = mode == 'auto';
     _connectionService.sendJoystickData({'cmd': 'mode', 'value': mode});
     notifyListeners();
-  }
-
-  void _handleSensorJson(Map<String, dynamic> json) {
-    _sensorData = SensorData.fromJson(json);
-    notifyListeners();
+  }  void _handleSensorJson(Map<String, dynamic> json) {
+    try {
+      // Log the raw data received
+      Logger.log('Processing sensor data: $json');
+      
+      // Extract sensor values with proper error handling
+      double? distance, temperature, humidity;
+      
+      // Extract distance - could be in cm or m
+      if (json.containsKey('distance')) {
+        try {
+          distance = double.tryParse(json['distance'].toString()) ?? _sensorData.distance;
+          // If distance is unreasonably large or small, ignore it
+          if (distance < 0 || distance > 1000) {
+            distance = _sensorData.distance;
+          }
+        } catch (e) {
+          Logger.log('Error parsing distance: $e');
+        }
+      }
+      
+      // Extract temperature - could be under 'temp' or 'temperature'
+      if (json.containsKey('temp')) {
+        try {
+          temperature = double.tryParse(json['temp'].toString()) ?? _sensorData.temperature;
+        } catch (e) {
+          Logger.log('Error parsing temp: $e');
+        }
+      } else if (json.containsKey('temperature')) {
+        try {
+          temperature = double.tryParse(json['temperature'].toString()) ?? _sensorData.temperature;
+        } catch (e) {
+          Logger.log('Error parsing temperature: $e');
+        }
+      }
+      
+      // Extract humidity
+      if (json.containsKey('humidity')) {
+        try {
+          humidity = double.tryParse(json['humidity'].toString()) ?? _sensorData.humidity;
+          // If humidity is out of range, ignore it
+          if (humidity < 0 || humidity > 100) {
+            humidity = _sensorData.humidity;
+          }
+        } catch (e) {
+          Logger.log('Error parsing humidity: $e');
+        }
+      }
+      
+      // Update sensor data
+      _sensorData = SensorData(
+        distance: distance ?? _sensorData.distance,
+        temperature: temperature ?? _sensorData.temperature,
+        humidity: humidity ?? _sensorData.humidity,
+      );
+      
+      // Log the updated sensor data
+      Logger.log('Updated sensor data: distance=${_sensorData.distance}cm, '
+          'temp=${_sensorData.temperature}°C, '
+          'humidity=${_sensorData.humidity}%');
+      
+      notifyListeners();
+    } catch (e) {
+      Logger.log('Error processing sensor data: $e');
+    }
   }
 
   Future<bool> connectBluetooth(String address) async {

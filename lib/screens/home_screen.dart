@@ -116,15 +116,17 @@ class HomeScreen extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Row(
-                    children: [
-                      // Joystick
+                    children: [                      // Joystick
                       Expanded(
                         child: Center(
-                          child: Joystick(
-                            size: 140,
-                            onChanged: (x, y) {
-                              provider.sendJoystick(x, y);
-                            },
+                          child: Container(
+                            margin: const EdgeInsets.all(12.0),
+                            child: Joystick(
+                              size: 140,
+                              onChanged: (x, y) {
+                                provider.sendJoystick(x, y);
+                              },
+                            ),
                           ),
                         ),
                       ),

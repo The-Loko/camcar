@@ -324,7 +324,6 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       }
     }
   }
-
   Future<BluetoothDevice?> _showDeviceSelectionDialog(List<BluetoothDevice> devices) async {
     return showDialog<BluetoothDevice>(
       context: context,
@@ -334,7 +333,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           borderRadius: BorderRadius.circular(16),
         ),
         title: const Text(
-          'Select Your Car',
+          'Select Your ESP32 Device',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -344,60 +343,163 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         content: Container(
           width: double.maxFinite,
           constraints: const BoxConstraints(maxHeight: 300),
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: devices.length,
-            separatorBuilder: (context, index) => const Divider(
-              color: Color(0xFF38383a),
-              height: 1,
-            ),
-            itemBuilder: (context, index) {
-              final device = devices[index];
-              return Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2c2c2e),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 2),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  leading: const Icon(
-                    Icons.bluetooth,
-                    color: Color(0xFF007aff),
-                    size: 24,
-                  ),
-                  title: Text(
-                    device.name.isNotEmpty ? device.name : 'Unknown Device',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    device.address,
-                    style: const TextStyle(
-                      color: Color(0xFF8e8e93),
-                      fontSize: 14,
-                    ),
-                  ),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Text(
+                  'Choose the ESP32 device for your car. Devices are sorted by signal strength.',
+                  style: const TextStyle(
                     color: Color(0xFF8e8e93),
-                    size: 16,
+                    fontSize: 14,
                   ),
-                  onTap: () {
-                    Navigator.of(context).pop(device);
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: devices.length,
+                  separatorBuilder: (context, index) => const Divider(
+                    color: Color(0xFF38383a),
+                    height: 1,
+                  ),
+                  itemBuilder: (context, index) {
+                    final device = devices[index];
+                    final bool isLikelyESP32 = 
+                        device.name.toLowerCase().contains('esp') ||
+                        device.name.toLowerCase().contains('gyro') ||
+                        device.name.toLowerCase().contains('car') ||
+                        device.address.startsWith('24:6f:28') ||
+                        device.address.startsWith('24:0a:c4') ||
+                        device.address.startsWith('30:ae:a4') ||
+                        device.address.startsWith('8c:aa:b5');
+                    
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2c2c2e),
+                        borderRadius: BorderRadius.circular(8),
+                        border: isLikelyESP32 ? Border.all(
+                          color: const Color(0xFF34c759),
+                          width: 1,
+                        ) : null,
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Stack(
+                          children: [
+                            Icon(
+                              Icons.bluetooth,
+                              color: isLikelyESP32 ? const Color(0xFF34c759) : const Color(0xFF007aff),
+                              size: 24,
+                            ),
+                            if (isLikelyESP32)
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF34c759),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                device.name.isNotEmpty ? device.name : 'Unknown Device',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: isLikelyESP32 ? FontWeight.w600 : FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            if (device.signalStrength != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: device.signalStrength == 'Strong' 
+                                      ? const Color(0xFF34c759).withValues(alpha: 26)
+                                      : device.signalStrength == 'Medium'
+                                          ? const Color(0xFFff9500).withValues(alpha: 26)
+                                          : const Color(0xFFff3b30).withValues(alpha: 26),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  device.signalStrength!,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: device.signalStrength == 'Strong' 
+                                        ? const Color(0xFF34c759)
+                                        : device.signalStrength == 'Medium'
+                                            ? const Color(0xFFff9500)
+                                            : const Color(0xFFff3b30),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        subtitle: Text(
+                          '${device.address}${device.rssi != null ? ' (${device.rssi} dBm)' : ''}',
+                          style: const TextStyle(
+                            color: Color(0xFF8e8e93),
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: isLikelyESP32
+                            ? const Text(
+                                'ESP32',
+                                style: TextStyle(
+                                  color: Color(0xFF34c759),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Color(0xFF8e8e93),
+                                size: 16,
+                              ),
+                        onTap: () {
+                          Navigator.of(context).pop(device);
+                        },
+                      ),
+                    );
                   },
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
         actions: [
+          TextButton(
+            child: const Text(
+              'Rescan',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final devices = await Provider.of<CarControlProvider>(context, listen: false).scanBluetoothDevices();
+              if (devices.isNotEmpty) {
+                _showDeviceSelectionDialog(devices);
+              }
+            },
+          ),
           TextButton(
             child: const Text(
               'Cancel',
