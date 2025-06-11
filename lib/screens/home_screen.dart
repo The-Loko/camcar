@@ -44,9 +44,8 @@ class HomeScreen extends StatelessWidget {
                                 ? MjpegViewer(
                                     isLive: true,
                                     stream: provider.cameraUrl,
-                                  )
-                                : Container(
-                                    decoration: BoxDecoration(
+                                  )                                : Container(
+                                    decoration: const BoxDecoration(
                                       gradient: LinearGradient(
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,

@@ -361,8 +361,7 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
           .connectBluetooth(selectedDevice.address);
     });
   }
-}
-  @override
+}  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CarControlProvider>(context);
     final isConnected = provider.connectionStatus == ConnectionStatus.connected;
@@ -497,7 +496,8 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
           ),
         ],
       ),
-    );  }
+    );
+  }
   
   String _getStatusText(ConnectionStatus status) {
     switch (status) {
@@ -508,7 +508,6 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
       case ConnectionStatus.error:
         return 'Connection Error';
       case ConnectionStatus.disconnected:
-      default:
         return 'Disconnected';
     }
   }
@@ -596,7 +595,7 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
     );
   }
 
-    // Helper method to show device selection dialog  void _showDeviceSelectionDialog(List<BluetoothDevice> devices) {
+  void _showDeviceSelectionDialog(List<BluetoothDevice> devices) {
     if (!mounted) return;
     
     showDialog(
@@ -632,8 +631,8 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
               : ListView.separated(
                   shrinkWrap: true,
                   itemCount: devices.length,
-                  separatorBuilder: (context, index) => Divider(
-                    color: const Color(0xFF38383a),
+                  separatorBuilder: (context, index) => const Divider(
+                    color: Color(0xFF38383a),
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
@@ -692,12 +691,12 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             },
           ),
         ],
-      ),    ).then((selectedDevice) {
-      // Guard context use after async gap (dialog closing)
-      if (!mounted || selectedDevice == null) return; 
+      ),
+    ).then((selectedDevice) {
+      if (!mounted || selectedDevice == null) return;
       
       Provider.of<CarControlProvider>(context, listen: false)
-        .connectBluetooth(selectedDevice.address);
+          .connectBluetooth(selectedDevice.address);
     });
   }
 }
