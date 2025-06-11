@@ -100,8 +100,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     
                     // Error Message
                     if (_errorMessage != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),                        decoration: BoxDecoration(
+                      Container(                        padding: const EdgeInsets.all(12),                        decoration: BoxDecoration(
                           color: const Color(0xFFff3b30).withValues(alpha: 26), // 0.1 opacity (26/255)
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
