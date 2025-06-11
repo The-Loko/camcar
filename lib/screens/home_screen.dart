@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                     child: Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Mjpeg(
+                        child: MjpegViewer(
                           isLive: true,
                           stream: provider.cameraUrl,
                         ),

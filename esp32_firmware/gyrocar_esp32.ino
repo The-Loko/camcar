@@ -21,6 +21,9 @@
 */
 
 #include <BluetoothSerial.h> // For Bluetooth connectivity
+#include <Wire.h>                     // I2C for BME280
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>          // BME280 sensor library
 
 // Check if Bluetooth is properly supported
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -92,6 +95,11 @@ float distance;
 unsigned long lastUltrasonicReadTime = 0;
 const unsigned long ULTRASONIC_INTERVAL = 100; // Read every 100ms
 
+// BME280 sensor
+Adafruit_BME280 bme;                  // BME280 sensor object
+unsigned long lastSensorSendTime = 0;
+const unsigned long SENSOR_INTERVAL = 1000; // send sensor data every 1 second
+
 void setup() {
   // Initialize Serial port for debugging
   Serial.begin(115200);
@@ -124,27 +132,47 @@ void setup() {
   // Start Bluetooth with the name "GyroCar"
   SerialBT.begin("GyroCar");
   
+  // Initialize BME280 sensor
+  Wire.begin();
+  if (!bme.begin(0x76)) {
+    Serial.println("BME280 init failed");
+  }
+
   // All systems initialized
   blinkLED(LED_STATUS, 3, 200); // Blink status LED 3 times
 }
 
 void loop() {
-  // Handle Bluetooth data
+  // Handle incoming Bluetooth data and commands
   if (SerialBT.available()) {
     handleBluetoothData();
   }
-  
-  // Check for obstacles regularly
+
+  // Read ultrasonic sensor periodically
   if (millis() - lastUltrasonicReadTime > ULTRASONIC_INTERVAL) {
     checkForObstacles();
     lastUltrasonicReadTime = millis();
   }
-  
-  // Check for connection timeout
-  checkTimeout();
-  
+
   // Handle obstacle avoidance if needed
   handleObstacleAvoidance();
+
+  // Periodically send sensor data (distance, temperature, humidity)
+  if (millis() - lastSensorSendTime >= SENSOR_INTERVAL) {
+    lastSensorSendTime = millis();
+    float temperature = bme.readTemperature();
+    float humidity = bme.readHumidity();
+    // Construct JSON string
+    String sensorJson = "{";
+    sensorJson += String("\"distance\":") + String(distance, 1) + ",";
+    sensorJson += String("\"temperature\":") + String(temperature, 1) + ",";
+    sensorJson += String("\"humidity\":") + String(humidity, 1);
+    sensorJson += "}";
+    SerialBT.println(sensorJson);
+  }
+
+  // Check for connection timeout to stop motors
+  checkTimeout();
 }
 
 // Handle gyroscope data received via Bluetooth
@@ -161,19 +189,41 @@ void handleBluetoothData() {
     }
   }
   
-  if (jsonData.length() > 0) {
-    btConnected = true;
-    digitalWrite(LED_BT, HIGH); // Turn on BT LED
-    
-    processGyroData(jsonData);
-    lastActivityTime = millis();
-    
-    // Send acknowledgement with obstacle data
-    String response = "OK";
-    if (obstacleDetected) {
-      response += " OBSTACLE:" + String(distance);
+  jsonData.trim();
+  if (jsonData.length() == 0) return;
+
+  // Determine message type: joystick or command
+  if (jsonData.indexOf('x') >= 0 && jsonData.indexOf('y') >= 0 && jsonData.indexOf('cmd') < 0) {
+    // Joystick data
+    float jx = 0, jy = 0;
+    if (sscanf(jsonData.c_str(), "{\"x\":%f,\"y\":%f}", &jx, &jy) == 2) {
+      controlMotors(jx, jy);
+      lastActivityTime = millis();
     }
-    SerialBT.println(response);
+  } else if (jsonData.indexOf('"cmd"') >= 0) {
+    // Command data
+    // Expect {"cmd":"power","value":true} or {"cmd":"mode","value":false}
+    char cmd[16];
+    bool val = false;
+    if (sscanf(jsonData.c_str(), "{\"cmd\":\"%[^"]\",\"value\":%d}", cmd, (int*)&val) >= 1) {
+      String command = String(cmd);
+      if (command == "power") {
+        if (val) {
+          // Turn on motors enable or LED_BT
+          digitalWrite(LED_BT, HIGH);
+        } else {
+          digitalWrite(LED_BT, LOW);
+          stopMotors();
+        }
+      } else if (command == "mode") {
+        // Auto/manual mode indicator
+        if (val) {
+          // Auto mode: could enable obstacle avoidance
+        } else {
+          // Manual mode
+        }
+      }
+    }
   }
 }
 
