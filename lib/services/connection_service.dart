@@ -115,8 +115,8 @@ class ConnectionService {
         throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
       }
       
-      // Get connected devices properly
-      List<fbp.BluetoothDevice> devices = await fbp.FlutterBluePlus.systemDevices;
+      // Get connected devices properly (systemDevices is a getter, not a function)
+      List<fbp.BluetoothDevice> devices = fbp.FlutterBluePlus.systemDevices;
       
       // If device not found, try to discover it
       _bluetoothDevice = devices.firstWhere(

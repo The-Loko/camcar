@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 typedef JoystickCallback = void Function(double x, double y);
 
@@ -92,22 +91,22 @@ class _JoystickPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint basePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 26) // 0.1 opacity
       ..style = PaintingStyle.fill;
 
     final Paint borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 51) // 0.2 opacity
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
     final Paint knobPaint = Paint()
       ..color = isDragging 
-          ? Colors.white.withOpacity(0.9)
-          : Colors.white.withOpacity(0.7)
+          ? Colors.white.withValues(alpha: 230) // ~0.9 opacity
+          : Colors.white.withValues(alpha: 179) // ~0.7 opacity
       ..style = PaintingStyle.fill;
 
     final Paint knobShadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.3)
+      ..color = Colors.black.withValues(alpha: 77) // ~0.3 opacity
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final Offset center = Offset(radius, radius);
@@ -118,7 +117,7 @@ class _JoystickPainter extends CustomPainter {
 
     // Draw center dot
     canvas.drawCircle(center, 3, Paint()
-      ..color = Colors.white.withOpacity(0.3));
+      ..color = Colors.white.withValues(alpha: 77)); // ~0.3 opacity
 
     // Draw knob shadow
     canvas.drawCircle(
@@ -138,7 +137,7 @@ class _JoystickPainter extends CustomPainter {
     canvas.drawCircle(
       center + knobPosition - Offset(knobRadius * 0.3, knobRadius * 0.3),
       knobRadius * 0.3,
-      Paint()..color = Colors.white.withOpacity(0.4),
+      Paint()..color = Colors.white.withValues(alpha: 102), // ~0.4 opacity
     );
   }
 
