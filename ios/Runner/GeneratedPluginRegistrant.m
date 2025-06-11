@@ -6,6 +6,12 @@
 
 #import "GeneratedPluginRegistrant.h"
 
+#if __has_include(<flutter_blue_plus_darwin/FlutterBluePlusPlugin.h>)
+#import <flutter_blue_plus_darwin/FlutterBluePlusPlugin.h>
+#else
+@import flutter_blue_plus_darwin;
+#endif
+
 #if __has_include(<sensors_plus/FPPSensorsPlusPlugin.h>)
 #import <sensors_plus/FPPSensorsPlusPlugin.h>
 #else
@@ -27,6 +33,7 @@
 @implementation GeneratedPluginRegistrant
 
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
+  [FlutterBluePlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FlutterBluePlusPlugin"]];
   [FPPSensorsPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPSensorsPlusPlugin"]];
   [SharedPreferencesPlugin registerWithRegistrar:[registry registrarForPlugin:@"SharedPreferencesPlugin"]];
   [WifiScanPlugin registerWithRegistrar:[registry registrarForPlugin:@"WifiScanPlugin"]];
