@@ -44,12 +44,12 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Bluetooth device selection (simplified)
+              // Bluetooth device selection (simplified)
             if (!isConnected) ...[
               ElevatedButton(
                 onPressed: () async {
-                  // Show dialog with device list                  final devices = await provider.scanBluetoothDevices();
+                  // Show dialog with device list
+                  final devices = await provider.scanBluetoothDevices();
                   
                   // Guard context use before async gap
                   if (!mounted) return; 
@@ -67,10 +67,10 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             ],
             
             const SizedBox(height: 16),
-            
-            // Connection status
+              // Connection status
             Container(
-              padding: const EdgeInsets.all(8),              decoration: const BoxDecoration(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
                 color: AppColors.secondaryColor.withAlpha((0.1 * 255).round()),
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -112,10 +112,10 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             const SizedBox(height: 16),
             
             // WiFi connection inputs
-            if (provider.connectionType != ConnectionType.bluetooth) ...[
-              TextField(
+            if (provider.connectionType != ConnectionType.bluetooth) ...[              TextField(
                 controller: _ipController,
-                style: const TextStyle(color: AppColors.secondaryColor),                decoration: const InputDecoration(
+                style: const TextStyle(color: AppColors.secondaryColor),
+                decoration: const InputDecoration(
                   labelText: 'Camera IP',
                   labelStyle: TextStyle(color: AppColors.secondaryColor),
                   enabledBorder: OutlineInputBorder(
@@ -126,11 +126,11 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
+              const SizedBox(height: 8),              TextField(
                 controller: _portController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: AppColors.secondaryColor),                decoration: const InputDecoration(
+                style: const TextStyle(color: AppColors.secondaryColor),
+                decoration: const InputDecoration(
                   labelText: 'Port',
                   labelStyle: TextStyle(color: AppColors.secondaryColor),
                   enabledBorder: OutlineInputBorder(
@@ -158,9 +158,9 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             
             // Scan & Connect / Disconnect Button
             ElevatedButton(
-              onPressed: () async {
-                if (provider.connectionStatus == ConnectionStatus.connected) {
-                  provider.disconnect();                } else {
+              onPressed: () async {                if (provider.connectionStatus == ConnectionStatus.connected) {
+                  provider.disconnect();
+                } else {
                   final devices = await provider.scanBluetoothDevices();
                   if (!mounted) return;
                   if (mounted) {
