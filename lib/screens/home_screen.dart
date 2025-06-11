@@ -93,20 +93,19 @@ class HomeScreen extends StatelessWidget {
                 // Parameters Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _ParameterItem(
+                  children: [                    _ParameterItem(
                       label: 'Distance',
-                      value: provider.sensorData?.distance.toStringAsFixed(1) ?? '--',
+                      value: provider.sensorData.distance.toStringAsFixed(1),
                       unit: 'm',
                     ),
                     _ParameterItem(
                       label: 'Temperature',
-                      value: provider.sensorData?.temperature.toStringAsFixed(1) ?? '--',
+                      value: provider.sensorData.temperature.toStringAsFixed(1),
                       unit: '°C',
                     ),
                     _ParameterItem(
                       label: 'Humidity',
-                      value: provider.sensorData?.humidity.toStringAsFixed(1) ?? '--',
+                      value: provider.sensorData.humidity.toStringAsFixed(1),
                       unit: '%',
                     ),
                   ],
