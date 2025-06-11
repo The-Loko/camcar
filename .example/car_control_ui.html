@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .video-section {
+            flex: 1;
+            background: #1c1c1e;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .parameters-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .parameter {
+            text-align: center;
+            flex: 1;
+        }
+
+        .parameter-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .parameter-label {
+            font-size: 13px;
+            color: #8e8e93;
+            font-weight: 500;
+        }
+
+        .controls-section {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 30px;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .joystick-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .joystick {
+            width: 140px;
+            height: 140px;
+            background: #1c1c1e;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid #38383a;
+        }
+
+        .joystick-knob {
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s ease;
+        }
+
+        .joystick-knob:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-button {
+            width: 80px;
+            height: 44px;
+            border: none;
+            border-radius: 22px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .power-btn {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .power-btn.on {
+            background: #34c759;
+        }
+
+        .mode-btn {
+            background: #007aff;
+            color: white;
+        }
+
+        .mode-btn.auto {
+            background: #ff9500;
+        }
+
+        .control-button:active {
+            transform: scale(0.95);
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff3b30;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.active {
+            background: #34c759;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+                gap: 16px;
+            }
+            
+            .controls-section {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .buttons-container {
+                flex-direction: row;
+                justify-content: center;
+                gap: 16px;
+            }
+            
+            .joystick {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .joystick-knob {
+                width: 40px;
+                height: 40px;
+            }
+
+            .parameter-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-section">
+            <div class="video-preview">
+                Camera Feed
+            </div>
+            <div class="status-bar">
+                <div class="status-dot active" id="connectionStatus"></div>
+                <div class="status-dot" id="powerStatus"></div>
+                <div class="status-dot" id="modeStatus"></div>
+            </div>
+        </div>
+
+        <div class="parameters-section">
+            <div class="parameter">
+                <div class="parameter-value" id="speedValue">0</div>
+                <div class="parameter-label">km/h</div>
+            </div>
+            <div class="parameter">
+                <div class="parameter-value" id="batteryValue">85</div>
+                <div class="parameter-label">battery</div>
+            </div>
+            <div class="parameter">
+                <div class="parameter-value" id="distanceValue">12.5</div>
+                <div class="parameter-label">meters</div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="joystick-container">
+                <div class="joystick" id="joystick">
+                    <div class="joystick-knob" id="joystickKnob"></div>
+                </div>
+            </div>
+
+            <div class="buttons-container">
+                <button class="control-button power-btn" id="powerBtn">
+                    OFF
+                </button>
+                <button class="control-button mode-btn" id="modeBtn">
+                    Manual
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Joystick functionality
+        const joystick = document.getElementById('joystick');
+        const joystickKnob = document.getElementById('joystickKnob');
+        let isDragging = false;
+        let joystickCenter = { x: 0, y: 0 };
+
+        function initJoystick() {
+            const rect = joystick.getBoundingClientRect();
+            joystickCenter.x = rect.width / 2;
+            joystickCenter.y = rect.height / 2;
+        }
+
+        function handleJoystickStart(e) {
+            isDragging = true;
+            initJoystick();
+            joystickKnob.style.transition = 'none';
+            e.preventDefault();
+        }
+
+        function handleJoystickMove(e) {
+            if (!isDragging) return;
+
+            const rect = joystick.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = clientX - rect.left - joystickCenter.x;
+            const y = clientY - rect.top - joystickCenter.y;
+            
+            const distance = Math.sqrt(x * x + y * y);
+            const maxDistance = joystickCenter.x - 22;
+            
+            if (distance <= maxDistance) {
+                joystickKnob.style.left = `${joystickCenter.x + x}px`;
+                joystickKnob.style.top = `${joystickCenter.y + y}px`;
+            } else {
+                const angle = Math.atan2(y, x);
+                const limitedX = Math.cos(angle) * maxDistance;
+                const limitedY = Math.sin(angle) * maxDistance;
+                joystickKnob.style.left = `${joystickCenter.x + limitedX}px`;
+                joystickKnob.style.top = `${joystickCenter.y + limitedY}px`;
+            }
+
+            // Update speed based on joystick position
+            const speedPercent = Math.min(distance / maxDistance, 1);
+            const speed = Math.round(speedPercent * 45);
+            document.getElementById('speedValue').textContent = speed;
+            
+            e.preventDefault();
+        }
+
+        function handleJoystickEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            joystickKnob.style.transition = 'all 0.3s ease';
+            joystickKnob.style.left = '50%';
+            joystickKnob.style.top = '50%';
+            
+            // Reset speed when joystick is released
+            setTimeout(() => {
+                document.getElementById('speedValue').textContent = '0';
+            }, 300);
+        }
+
+        // Mouse events
+        joystick.addEventListener('mousedown', handleJoystickStart);
+        document.addEventListener('mousemove', handleJoystickMove);
+        document.addEventListener('mouseup', handleJoystickEnd);
+
+        // Touch events
+        joystick.addEventListener('touchstart', handleJoystickStart);
+        document.addEventListener('touchmove', handleJoystickMove);
+        document.addEventListener('touchend', handleJoystickEnd);
+
+        // Button functionality
+        const powerBtn = document.getElementById('powerBtn');
+        const modeBtn = document.getElementById('modeBtn');
+        const powerStatus = document.getElementById('powerStatus');
+        const modeStatus = document.getElementById('modeStatus');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        let isPowerOn = false;
+        let isAutoMode = false;
+
+        powerBtn.addEventListener('click', () => {
+            isPowerOn = !isPowerOn;
+            powerBtn.textContent = isPowerOn ? 'ON' : 'OFF';
+            powerBtn.classList.toggle('on', isPowerOn);
+            powerStatus.classList.toggle('active', isPowerOn);
+        });
+
+        modeBtn.addEventListener('click', () => {
+            isAutoMode = !isAutoMode;
+            modeBtn.textContent = isAutoMode ? 'Auto' : 'Manual';
+            modeBtn.classList.toggle('auto', isAutoMode);
+            modeStatus.classList.toggle('active', isAutoMode);
+        });
+
+        // Simulate live parameters
+        function updateParameters() {
+            const battery = document.getElementById('batteryValue');
+            const distance = document.getElementById('distanceValue');
+            
+            // Simulate battery drain
+            let currentBattery = parseInt(battery.textContent);
+            if (isPowerOn && currentBattery > 0) {
+                currentBattery = Math.max(0, currentBattery - Math.random() * 0.1);
+                battery.textContent = Math.round(currentBattery);
+            }
+            
+            // Simulate distance sensor
+            const newDistance = (Math.random() * 15 + 8).toFixed(1);
+            distance.textContent = newDistance;
+        }
+
+        // Simulate connection status
+        function updateConnection() {
+            const isConnected = Math.random() > 0.1;
+            connectionStatus.classList.toggle('active', isConnected);
+        }
+
+        // Initialize
+        initJoystick();
+
+        // Update parameters every second
+        setInterval(updateParameters, 1000);
+        setInterval(updateConnection, 5000);
+    </script>
+</body>
+</html>
