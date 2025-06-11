@@ -100,27 +100,22 @@ class ConnectionService {
     _connectionStatus = ConnectionStatus.connecting;
     _targetAddress = address;
     
-    try {
-      // Find the device with the matching address
+    try {      // Find the device with the matching address
       List<fbp.BluetoothDevice> devices = await fbp.FlutterBluePlus.systemDevices;
-      
-      // Check for connected devices first
-      List<fbp.BluetoothDevice> connectedDevices = await fbp.FlutterBluePlus.connectedSystemDevices;
-      devices.addAll(connectedDevices);
       
       // If device not found, try to discover it
       _bluetoothDevice = devices.firstWhere(
-        (device) => device.id.id == address,
+        (device) => device.remoteId.str == address,
         orElse: () {
           Logger.log('Device not found in known devices, attempting to create it');
-          return fbp.BluetoothDevice.fromId(fbp.DeviceIdentifier(address));
+          return fbp.BluetoothDevice.fromId(address);
         },
       );
-      
-      Logger.log('Connecting to device: ${_bluetoothDevice?.id.id} (${_bluetoothDevice?.name})');
+        Logger.log('Connecting to device: ${_bluetoothDevice?.remoteId.str} (${_bluetoothDevice?.platformName})');
       
       // Ensure device is not already connected
-      if (connectedDevices.any((device) => device.id.id == address)) {
+      var connectedDevices = await fbp.FlutterBluePlus.connectedDevices;
+      if (connectedDevices.any((device) => device.remoteId.str == address)) {
         Logger.log('Device already connected, disconnecting first');
         await _bluetoothDevice!.disconnect();
         await Future.delayed(const Duration(milliseconds: 500));
@@ -136,11 +131,10 @@ class ConnectionService {
       // Discover services
       Logger.log('Discovering services...');
       List<fbp.BluetoothService> services = await _bluetoothDevice!.discoverServices();
-      
-      // ESP32 standard UART service and characteristic UUIDs
-      const String UART_SERVICE_UUID = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E';
-      const String UART_RX_CHAR_UUID = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'; // RX from ESP32 perspective (write)
-      const String UART_TX_CHAR_UUID = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'; // TX from ESP32 perspective (read)
+        // ESP32 standard UART service and characteristic UUIDs
+      const String uartServiceUuid = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E';
+      const String uartRxCharUuid = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'; // RX from ESP32 perspective (write)
+      const String uartTxCharUuid = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'; // TX from ESP32 perspective (read)
       
       // Print all services and their characteristics for debugging
       for (var service in services) {
@@ -156,9 +150,8 @@ class ConnectionService {
       
       // Try to find the UART service first
       fbp.BluetoothService? uartService;
-      try {
-        uartService = services.firstWhere(
-          (service) => service.uuid.toString().toUpperCase() == UART_SERVICE_UUID,
+      try {        uartService = services.firstWhere(
+          (service) => service.uuid.toString().toUpperCase() == uartServiceUuid,
         );
         Logger.log('Found UART service: ${uartService.uuid}');
       } catch (e) {
@@ -188,9 +181,8 @@ class ConnectionService {
       var characteristics = uartService.characteristics;
       
       // Try to find standard characteristics first
-      try {
-        _writeCharacteristic = characteristics.firstWhere(
-          (char) => char.uuid.toString().toUpperCase() == UART_RX_CHAR_UUID && 
+      try {        _writeCharacteristic = characteristics.firstWhere(
+          (char) => char.uuid.toString().toUpperCase() == uartRxCharUuid && 
                    (char.properties.write || char.properties.writeWithoutResponse),
         );
         Logger.log('Found standard write characteristic: ${_writeCharacteristic?.uuid}');
@@ -203,9 +195,8 @@ class ConnectionService {
         Logger.log('Using alternative write characteristic: ${_writeCharacteristic?.uuid}');
       }
       
-      try {
-        _readCharacteristic = characteristics.firstWhere(
-          (char) => char.uuid.toString().toUpperCase() == UART_TX_CHAR_UUID && 
+      try {        _readCharacteristic = characteristics.firstWhere(
+          (char) => char.uuid.toString().toUpperCase() == uartTxCharUuid && 
                    (char.properties.notify || char.properties.indicate),
         );
         Logger.log('Found standard read characteristic: ${_readCharacteristic?.uuid}');
@@ -376,10 +367,9 @@ class ConnectionService {
       
       Logger.log('Raw scan found ${scanResults.length} devices');
       
-      // Filter for ESP32 devices first with better matching
-      var filteredResults = scanResults.where((result) {
-        final deviceName = result.device.name.toLowerCase();
-        final deviceId = result.device.id.id.toLowerCase();
+      // Filter for ESP32 devices first with better matching      var filteredResults = scanResults.where((result) {
+        final deviceName = result.device.platformName.toLowerCase();
+        final deviceId = result.device.remoteId.str.toLowerCase();
         return deviceName.contains('esp') || 
                deviceName.contains('gyro') || 
                deviceName.contains('car') ||
@@ -400,18 +390,17 @@ class ConnectionService {
       } else {
         Logger.log('Found ${filteredResults.length} potential ESP32 devices');
       }
-      
-      // Convert to our BluetoothDevice model with additional information
+        // Convert to our BluetoothDevice model with additional information
       return filteredResults.map((result) {
-        final deviceName = result.device.name.isNotEmpty 
-            ? result.device.name 
+        final deviceName = result.device.platformName.isNotEmpty 
+            ? result.device.platformName 
             : 'Unknown Device';
         final signalStrength = result.rssi > -70 ? 'Strong' : 
                              result.rssi > -90 ? 'Medium' : 'Weak';
             
         return bt_device.BluetoothDevice(
           name: deviceName,
-          address: result.device.id.id,
+          address: result.device.remoteId.str,
           rssi: result.rssi,
           signalStrength: signalStrength,
         );

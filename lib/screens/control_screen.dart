@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:ui';
 import '../providers/car_control_provider.dart';
 import '../services/connection_service.dart';
 import '../widgets/mjpeg_viewer.dart';
@@ -299,7 +298,10 @@ class _ControlScreenState extends State<ControlScreen> {
             size: 24,
           ),
           const SizedBox(height: 4),
-          Text(            value,            style: TextStyle(              color: color,
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
