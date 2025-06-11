@@ -14,7 +14,7 @@ dependencies:
   shared_preferences: ^2.2.2  # For saving settings
   provider: ^6.1.1  # For state management
   cupertino_icons: ^1.0.6
-  flutter_mjpeg: ^0.1.7
+  flutter_mjpeg: ^2.0.4
 
 dev_dependencies:
   flutter_test:
