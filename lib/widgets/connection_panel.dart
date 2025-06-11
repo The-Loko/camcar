@@ -13,7 +13,15 @@ class ConnectionPanel extends StatefulWidget {
 }
 
 class _ConnectionPanelState extends State<ConnectionPanel> {
-  // no Wi-Fi controllers or selection needed
+  final TextEditingController _ipController = TextEditingController();
+  final TextEditingController _portController = TextEditingController(text: '80');
+
+  @override
+  void dispose() {
+    _ipController.dispose();
+    _portController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +110,53 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             ),
             
             const SizedBox(height: 16),
+            
+            // WiFi connection inputs
+            if (provider.connectionType != ConnectionType.bluetooth) ...[
+              TextField(
+                controller: _ipController,
+                style: const TextStyle(color: AppColors.secondaryColor),
+                decoration: InputDecoration(
+                  labelText: 'Camera IP',
+                  labelStyle: const TextStyle(color: AppColors.secondaryColor),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: AppColors.secondaryColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: AppColors.accentColor),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _portController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.secondaryColor),
+                decoration: InputDecoration(
+                  labelText: 'Port',
+                  labelStyle: const TextStyle(color: AppColors.secondaryColor),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: AppColors.secondaryColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: AppColors.accentColor),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () {
+                  final ip = _ipController.text.trim();
+                  final port = int.tryParse(_portController.text.trim()) ?? 80;
+                  provider.connectWifi(ip, port);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentColor,
+                ),
+                child: const Text('Connect Camera WiFi'),
+              ),
+              const SizedBox(height: 16),
+            ],
             
             // Scan & Connect / Disconnect Button
             ElevatedButton(

@@ -18,6 +18,22 @@ class CarControlProvider with ChangeNotifier {
   ControlData? _lastControlData;
   ControlData? get lastControlData => _lastControlData;
 
+  SensorData? _sensorData;
+  SensorData? get sensorData => _sensorData;
+
+  bool _isPowerOn = false;
+  bool get isPowerOn => _isPowerOn;
+
+  bool _isAutoMode = false;
+  bool get isAutoMode => _isAutoMode;
+
+  String _cameraUrl = '';
+  String get cameraUrl => _cameraUrl;
+  set cameraUrl(String url) {
+    _cameraUrl = url;
+    notifyListeners();
+  }
+
   void toggleControl() {
     if (isControlActive) {
       stopControl();
@@ -48,12 +64,28 @@ class CarControlProvider with ChangeNotifier {
 
   Future<bool> connectWifi(String ipAddress, int port) async {
     final result = await _connectionService.connectWifi(ipAddress, port);
+    if (result) {
+      cameraUrl = 'http://$ipAddress:$port/stream';
+    }
     notifyListeners();
     return result;
   }
 
+  // Send joystick move
+  void sendJoystick(double x, double y) {
+    _connectionService.sendJoystickData({'x': x, 'y': y});
+  }
+
+  void _handleSensorJson(Map<String, dynamic> json) {
+    _sensorData = SensorData.fromJson(json);
+    notifyListeners();
+  }
+
   Future<bool> connectBluetooth(String address) async {
     final result = await _connectionService.connectBluetooth(address);
+    if (result) {
+      _connectionService.listenForSensorData(_handleSensorJson);
+    }
     notifyListeners();
     return result;
   }
@@ -74,6 +106,18 @@ class CarControlProvider with ChangeNotifier {
   void _handleGyroscopeData(ControlData data) {
     _lastControlData = data;
     _connectionService.sendControlData(data);
+    notifyListeners();
+  }
+
+  void togglePower() {
+    _isPowerOn = !_isPowerOn;
+    _connectionService.sendJoystickData({'cmd': 'power', 'value': _isPowerOn});
+    notifyListeners();
+  }
+
+  void toggleMode() {
+    _isAutoMode = !_isAutoMode;
+    _connectionService.sendJoystickData({'cmd': 'mode', 'value': _isAutoMode});
     notifyListeners();
   }
 

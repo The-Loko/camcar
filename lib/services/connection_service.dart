@@ -104,6 +104,33 @@ class ConnectionService {
     }
   }
 
+  // Send joystick data via Bluetooth
+  Future<bool> sendJoystickData(Map<String, dynamic> data) async {
+    if (_connectionStatus != ConnectionStatus.connected || _connectionType != ConnectionType.bluetooth) {
+      return false;
+    }
+    try {
+      final jsonData = jsonEncode(data);
+      _bluetoothConnection?.output.add(Uint8List.fromList(utf8.encode(jsonData + '\n')));
+      await _bluetoothConnection?.output.allSent;
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return false;
+    }
+  }
+
+  // Listen for sensor data via Bluetooth
+  void listenForSensorData(void Function(Map<String, dynamic>) onData) {
+    _bluetoothConnection?.input?.listen((Uint8List packet) {
+      final msg = utf8.decode(packet);
+      try {
+        final json = jsonDecode(msg.trim());
+        onData(json);
+      } catch (_) {}
+    });
+  }
+
   // Scan for Bluetooth devices
   Future<List<BluetoothDevice>> scanBluetoothDevices() async {
     try {
