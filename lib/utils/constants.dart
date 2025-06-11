@@ -26,17 +26,14 @@ class AppTheme {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.backgroundColor,
-      fontFamily: '-apple-system',
-      colorScheme: const ColorScheme.dark(
+      fontFamily: '-apple-system',      colorScheme: const ColorScheme.dark(
         primary: AppColors.systemBlue,
         secondary: AppColors.systemBlue,
         surface: AppColors.surfaceColor,
-        background: AppColors.backgroundColor,
         error: AppColors.systemRed,
         onPrimary: AppColors.textPrimary,
         onSecondary: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
         onError: AppColors.textPrimary,
       ),
       appBarTheme: const AppBarTheme(
