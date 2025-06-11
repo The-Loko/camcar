@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   sensors_plus: ^6.1.1  # For gyroscope data
-  flutter_bluetooth_serial: ^0.4.0  # For Bluetooth connectivity
+  flutter_blue_plus: ^1.32.12  # For Bluetooth connectivity (more compatible)
   wifi_scan: ^0.4.0+1  # Replacing wifi_iot with recommended package
   shared_preferences: ^2.2.2  # For saving settings
   provider: ^6.1.1  # For state management
