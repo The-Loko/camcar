@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_bluetooth_serial: ^0.4.0
   flutter_joystick: ^1.2.0
-  mjpeg: ^1.0.0
+  flutter_mjpeg: ^0.1.1
 
 dev_dependencies:
   flutter_test:
