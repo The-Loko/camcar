@@ -18,9 +18,8 @@ class CarControlProvider with ChangeNotifier {
   
   ControlData? _lastControlData;
   ControlData? get lastControlData => _lastControlData;
-
-  SensorData? _sensorData;
-  SensorData? get sensorData => _sensorData;
+  SensorData _sensorData = SensorData(distance: 0, temperature: 0, humidity: 0);
+  SensorData get sensorData => _sensorData;
 
   bool _isPowerOn = false;
   bool get isPowerOn => _isPowerOn;
@@ -75,6 +74,25 @@ class CarControlProvider with ChangeNotifier {
   // Send joystick move
   void sendJoystick(double x, double y) {
     _connectionService.sendJoystickData({'x': x, 'y': y});
+  }
+
+  // Send joystick data (new method name for consistency)
+  void sendJoystickData(double x, double y) {
+    _connectionService.sendJoystickData({'x': x, 'y': y});
+  }
+
+  // Send power command
+  void sendPowerCommand(bool isOn) {
+    _isPowerOn = isOn;
+    _connectionService.sendJoystickData({'cmd': 'power', 'value': isOn});
+    notifyListeners();
+  }
+
+  // Send mode command
+  void sendModeCommand(String mode) {
+    _isAutoMode = mode == 'auto';
+    _connectionService.sendJoystickData({'cmd': 'mode', 'value': mode});
+    notifyListeners();
   }
 
   void _handleSensorJson(Map<String, dynamic> json) {

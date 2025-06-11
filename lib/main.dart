@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/car_control_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/connection_screen.dart';
 import 'utils/constants.dart';
 
 void main() {
@@ -23,11 +23,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => CarControlProvider(),
-      child: MaterialApp(
+      create: (context) => CarControlProvider(),      child: MaterialApp(
         title: 'GyroCar',
         theme: AppTheme.getTheme(),
-        home: const HomeScreen(),
+        home: const ConnectionScreen(),
         debugShowCheckedModeBanner: false,
       ),
     );
