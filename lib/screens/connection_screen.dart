@@ -101,12 +101,11 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     // Error Message
                     if (_errorMessage != null) ...[
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFff3b30).withOpacity(0.1),
+                        padding: const EdgeInsets.all(12),                        decoration: BoxDecoration(
+                          color: const Color(0xFFff3b30).withValues(alpha: 26), // 0.1 opacity (26/255)
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFFff3b30).withOpacity(0.3),
+                            color: const Color(0xFFff3b30).withValues(alpha: 77), // 0.3 opacity (77/255)
                           ),
                         ),
                         child: Row(
@@ -227,9 +226,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     bool isLoading = false,
   }) {
     return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: onPressed != null ? color : color.withOpacity(0.5),
+      height: 50,      decoration: BoxDecoration(
+        color: onPressed != null ? color : color.withValues(alpha: 128), // 0.5 opacity (128/255)
         borderRadius: BorderRadius.circular(25),
       ),
       child: Material(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui'; // Add this for FontFeature
 import '../providers/car_control_provider.dart';
 import '../services/connection_service.dart';
 import '../widgets/mjpeg_viewer.dart';
@@ -252,9 +253,8 @@ class _ControlScreenState extends State<ControlScreen> {
 
   Widget _buildStatusDot({required bool isActive, required String label}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 153), // 0.6 opacity (153/255)
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -300,12 +300,11 @@ class _ControlScreenState extends State<ControlScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            value,
-            style: TextStyle(
+            value,            style: TextStyle(
               color: color,
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              fontVariantNumeric: FontVariantNumeric.tabularNums,
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
           Text(
@@ -328,9 +327,8 @@ class _ControlScreenState extends State<ControlScreen> {
   }) {
     return Container(
       width: 80,
-      height: 44,
-      decoration: BoxDecoration(
-        color: onPressed != null ? color : color.withOpacity(0.5),
+      height: 44,      decoration: BoxDecoration(
+        color: onPressed != null ? color : color.withValues(alpha: 128), // 0.5 opacity (128/255)
         borderRadius: BorderRadius.circular(22),
       ),
       child: Material(
