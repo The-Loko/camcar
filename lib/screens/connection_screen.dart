@@ -142,13 +142,21 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
               ),
               
               const Spacer(),
-              
-              // Footer
+                // Footer
               const Text(
                 'Make sure your ESP32 camera and car are powered on',
                 style: TextStyle(
                   color: Color(0xFF8e8e93),
                   fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'ESP32 should advertise as "GyroCar" via Bluetooth',
+                style: TextStyle(
+                  color: Color(0xFF8e8e93),
+                  fontSize: 12,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -266,11 +274,16 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     final provider = Provider.of<CarControlProvider>(context, listen: false);
 
-    try {
-      // Validate IP address
+    try {      // Validate IP address format
       final ip = _ipController.text.trim();
       if (ip.isEmpty) {
         throw Exception('Please enter a camera IP address');
+      }
+      
+      // Basic IP validation
+      final ipRegex = RegExp(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$');
+      if (!ipRegex.hasMatch(ip)) {
+        throw Exception('Please enter a valid IP address (e.g., 192.168.1.100)');
       }
 
       final port = int.tryParse(_portController.text.trim()) ?? 80;
@@ -364,15 +377,18 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
-                    final device = devices[index];
-                    final bool isLikelyESP32 = 
+                    final device = devices[index];                    final bool isLikelyESP32 = 
                         device.name.toLowerCase().contains('esp') ||
                         device.name.toLowerCase().contains('gyro') ||
                         device.name.toLowerCase().contains('car') ||
+                        device.name.toLowerCase() == 'gyrocar' ||
                         device.address.startsWith('24:6f:28') ||
                         device.address.startsWith('24:0a:c4') ||
                         device.address.startsWith('30:ae:a4') ||
-                        device.address.startsWith('8c:aa:b5');
+                        device.address.startsWith('8c:aa:b5') ||
+                        device.address.startsWith('c8:c9:a3') ||
+                        device.address.startsWith('dc:a6:32') ||
+                        device.address.startsWith('7c:9e:bd');
                     
                     return Container(
                       decoration: BoxDecoration(

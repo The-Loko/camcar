@@ -49,11 +49,11 @@ class ConnectionService {
         if (statusResponse.statusCode == 200) {
           // Read the response to verify it's an ESP32-CAM
           final content = await statusResponse.transform(utf8.decoder).join();
-          if (content.contains('ESP32') || content.contains('Camera')) {
-            Logger.log('Successfully validated ESP32-CAM status');
+          if (content.contains('ESP32') || content.contains('Camera')) {          Logger.log('Successfully validated ESP32-CAM status');
           } else {
             Logger.log('Response does not appear to be from an ESP32-CAM: $content');
-            // Still proceed but with a warning
+            // Still proceed but log a warning - some ESP32-CAM don't return identifying info
+            Logger.log('Warning: Could not verify ESP32-CAM identity, but proceeding with connection');
           }
         } else {
           Logger.log('Status check failed with code: ${statusResponse.statusCode}');
@@ -380,8 +380,7 @@ class ConnectionService {
       
       // Stop any previous scans
       await fbp.FlutterBluePlus.stopScan();
-      
-      // Start fresh scan with longer timeout for better device discovery
+        // Start fresh scan with longer timeout for better device discovery
       await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
       
       // Wait for scan results to complete
@@ -392,7 +391,11 @@ class ConnectionService {
       
       Logger.log('Bluetooth scan found ${scanResults.length} devices');
       
-      // Filter for ESP32 devices with comprehensive matching
+      // Log all discovered devices for debugging
+      for (var result in scanResults) {
+        Logger.log('Found device: ${result.device.platformName.isNotEmpty ? result.device.platformName : "Unknown"} (${result.device.remoteId.str}) RSSI: ${result.rssi}');
+      }
+        // Filter for ESP32 devices with comprehensive matching
       var filteredResults = scanResults.where((result) {
         final deviceName = result.device.platformName.toLowerCase();
         final deviceId = result.device.remoteId.str.toLowerCase();
@@ -403,19 +406,32 @@ class ConnectionService {
                       deviceName.contains('car') ||
                       deviceName.contains('bluetooth') ||
                       deviceName.contains('serial') ||
-                      // Common ESP32 MAC address prefixes
+                      deviceName == 'gyrocar' ||  // Exact match for our firmware
+                      // Common ESP32 MAC address prefixes (Espressif Systems)
                       deviceId.startsWith('24:6f:28') || 
                       deviceId.startsWith('24:0a:c4') ||
                       deviceId.startsWith('30:ae:a4') ||
                       deviceId.startsWith('8c:aa:b5') ||
                       deviceId.startsWith('94:b9:7e') ||
-                      deviceId.startsWith('ac:67:b2');
+                      deviceId.startsWith('ac:67:b2') ||
+                      deviceId.startsWith('c8:c9:a3') ||  // Additional ESP32 prefixes
+                      deviceId.startsWith('dc:a6:32') ||
+                      deviceId.startsWith('7c:9e:bd');
                       
         return isESP32;
       }).toList();
-      
-      // Sort by RSSI (signal strength) to prioritize nearby devices
-      filteredResults.sort((a, b) => b.rssi.compareTo(a.rssi));
+        // Sort by RSSI (signal strength) to prioritize nearby devices
+      filteredResults.sort((a, b) {
+        // First prioritize exact "GyroCar" matches
+        bool aIsGyroCar = a.device.platformName.toLowerCase() == 'gyrocar';
+        bool bIsGyroCar = b.device.platformName.toLowerCase() == 'gyrocar';
+        
+        if (aIsGyroCar && !bIsGyroCar) return -1;
+        if (!aIsGyroCar && bIsGyroCar) return 1;
+        
+        // Then sort by signal strength
+        return b.rssi.compareTo(a.rssi);
+      });
       
       // If no ESP32 devices found, show all discoverable devices but prioritize strong signals
       if (filteredResults.isEmpty) {
@@ -427,14 +443,14 @@ class ConnectionService {
       } else {
         Logger.log('Found ${filteredResults.length} potential ESP32 devices');
       }
-      
-      // Convert to our BluetoothDevice model with detailed information
+        // Convert to our BluetoothDevice model with detailed information
       return filteredResults.map((result) {
         final deviceName = result.device.platformName.isNotEmpty 
             ? result.device.platformName 
             : 'Unknown Device (${result.device.remoteId.str})';
             
-        final signalStrength = result.rssi > -60 ? 'Excellent' :
+        final signalStrength = result.rssi > -50 ? 'Excellent' :
+                             result.rssi > -60 ? 'Very Good' :
                              result.rssi > -70 ? 'Good' : 
                              result.rssi > -80 ? 'Fair' : 
                              result.rssi > -90 ? 'Poor' : 'Very Poor';
