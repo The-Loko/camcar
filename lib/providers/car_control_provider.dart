@@ -4,6 +4,7 @@ import '../services/connection_service.dart';
 import '../models/control_data.dart';
 import '../models/bluetooth_device.dart';
 import '../models/wifi_network.dart';
+import '../models/sensor_data.dart';
 
 class CarControlProvider with ChangeNotifier {
   final GyroscopeService _gyroscopeService = GyroscopeService();

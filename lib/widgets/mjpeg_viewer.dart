@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mjpeg/mjpeg.dart';
+import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 
 /// Widget to display MJPEG stream
 class MjpegViewer extends StatelessWidget {
