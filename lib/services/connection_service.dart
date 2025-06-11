@@ -81,7 +81,6 @@ class ConnectionService {
     _connectionStatus = ConnectionStatus.disconnected;
     _connectionType = ConnectionType.none;
   }
-
   // Send control data
   Future<bool> sendControlData(ControlData data) async {
     if (_connectionStatus != ConnectionStatus.connected) {
@@ -91,15 +90,8 @@ class ConnectionService {
     final jsonData = jsonEncode(data.toJson());
     
     try {
-      if (_connectionType == ConnectionType.bluetooth && _bluetoothConnection != null) {
-        _bluetoothConnection!.output.add(Uint8List.fromList(utf8.encode('$jsonData\n')));
-        // Add timeout to prevent hanging if connection has issues
-        await _bluetoothConnection!.output.allSent.timeout(
-          const Duration(seconds: 2),
-          onTimeout: () {
-            throw TimeoutException('Bluetooth data sending timeout');
-          },
-        );
+      if (_connectionType == ConnectionType.bluetooth && _writeCharacteristic != null) {
+        await _writeCharacteristic!.write(utf8.encode('$jsonData\n'));
       } else if (_connectionType == ConnectionType.wifi) {
         // In a real implementation, you would send data over the TCP/IP socket
         // For this example, we'll just simulate sending data
@@ -111,44 +103,43 @@ class ConnectionService {
       return false;
     }
   }
-
   // Send joystick data via Bluetooth
   Future<bool> sendJoystickData(Map<String, dynamic> data) async {
     if (_connectionStatus != ConnectionStatus.connected || _connectionType != ConnectionType.bluetooth) {
       return false;
     }
-    try {      final jsonData = jsonEncode(data);
-      _bluetoothConnection?.output.add(Uint8List.fromList(utf8.encode('$jsonData\n')));
-      await _bluetoothConnection?.output.allSent;
+    try {
+      final jsonData = jsonEncode(data);
+      if (_writeCharacteristic != null) {
+        await _writeCharacteristic!.write(utf8.encode('$jsonData\n'));
+      }
       return true;
     } catch (e) {
       _errorMessage = e.toString();
       return false;
     }
   }
-
   // Listen for sensor data via Bluetooth
   void listenForSensorData(void Function(Map<String, dynamic>) onData) {
-    _bluetoothConnection?.input?.listen((Uint8List packet) {
-      final msg = utf8.decode(packet);
-      try {
-        final json = jsonDecode(msg.trim());
-        onData(json);
-      } catch (_) {}
-    });
+    if (_readCharacteristic != null) {
+      _dataSubscription = _readCharacteristic!.lastValueStream.listen((value) {
+        final msg = utf8.decode(value);
+        try {
+          final json = jsonDecode(msg.trim());
+          onData(json);
+        } catch (_) {}
+      });
+    }
   }
-
   // Scan for Bluetooth devices
   Future<List<BluetoothDevice>> scanBluetoothDevices() async {
     try {
-      final devices = await fbs.FlutterBluetoothSerial.instance.getBondedDevices()
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw TimeoutException('Bluetooth scan timeout');
-            },
-          );
-      return devices.map((device) => BluetoothDevice.fromFlutterBluetoothSerial(device)).toList();
+      // For flutter_blue_plus, we'll return some mock devices for now
+      // In a real implementation, you'd use FlutterBluePlus.startScan()
+      return [
+        BluetoothDevice(name: 'GyroCar', address: '00:11:22:33:44:55'),
+        BluetoothDevice(name: 'ESP32-CAM', address: '00:11:22:33:44:56'),
+      ];
     } catch (e) {
       _errorMessage = "Bluetooth scan failed: ${e.toString()}";
       return [];
