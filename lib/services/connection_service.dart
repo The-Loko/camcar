@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
 import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
 import '../models/control_data.dart';
-import '../models/bluetooth_device.dart';
+import '../models/bluetooth_device.dart' as custom;
 import '../models/wifi_network.dart';
 import '../utils/logger.dart';
 
@@ -15,9 +15,9 @@ enum ConnectionStatus { connected, disconnected, connecting, error }
 class ConnectionService {
   ConnectionType _connectionType = ConnectionType.none;
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
-  BluetoothDevice? _bluetoothDevice;
-  BluetoothCharacteristic? _writeCharacteristic;
-  BluetoothCharacteristic? _readCharacteristic;
+  fbp.BluetoothDevice? _bluetoothDevice;
+  fbp.BluetoothCharacteristic? _writeCharacteristic;
+  fbp.BluetoothCharacteristic? _readCharacteristic;
   String _errorMessage = '';
   String _targetAddress = '';
   StreamSubscription<List<int>>? _dataSubscription;
@@ -127,18 +127,18 @@ class ConnectionService {
         try {
           final json = jsonDecode(msg.trim());
           onData(json);
-        } catch (_) {}
-      });
+        } catch (_) {}      });
     }
   }
+
   // Scan for Bluetooth devices
-  Future<List<BluetoothDevice>> scanBluetoothDevices() async {
+  Future<List<custom.BluetoothDevice>> scanBluetoothDevices() async {
     try {
       // For flutter_blue_plus, we'll return some mock devices for now
       // In a real implementation, you'd use FlutterBluePlus.startScan()
       return [
-        BluetoothDevice(name: 'GyroCar', address: '00:11:22:33:44:55'),
-        BluetoothDevice(name: 'ESP32-CAM', address: '00:11:22:33:44:56'),
+        custom.BluetoothDevice(name: 'GyroCar', address: '00:11:22:33:44:55'),
+        custom.BluetoothDevice(name: 'ESP32-CAM', address: '00:11:22:33:44:56'),
       ];
     } catch (e) {
       _errorMessage = "Bluetooth scan failed: ${e.toString()}";

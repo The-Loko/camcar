@@ -95,7 +95,6 @@ class CarControlProvider with ChangeNotifier {
     await _connectionService.disconnect();
     notifyListeners();
   }
-
   Future<List<BluetoothDevice>> scanBluetoothDevices() {
     return _connectionService.scanBluetoothDevices();
   }
