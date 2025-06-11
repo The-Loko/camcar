@@ -377,7 +377,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
-                    final device = devices[index];                    final bool isLikelyESP32 = 
+                    final device = devices[index];
+                    final bool isLikelyESP32 = 
                         device.name.toLowerCase().contains('esp') ||
                         device.name.toLowerCase().contains('gyro') ||
                         device.name.toLowerCase().contains('car') ||
@@ -413,16 +414,12 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                               size: 24,
                             ),
                             if (isLikelyESP32)
-                              Positioned(
+                              const Positioned(
                                 right: 0,
                                 bottom: 0,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF34c759),
-                                    shape: BoxShape.circle,
-                                  ),
+                                child: CircleAvatar(
+                                  radius: 4,
+                                  backgroundColor: Color(0xFF34c759),
                                 ),
                               ),
                           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 typedef JoystickCallback = void Function(double x, double y);
 
@@ -13,77 +14,134 @@ class Joystick extends StatefulWidget {
 }
 
 class JoystickState extends State<Joystick> {
-  Offset _knobOffset = Offset.zero;
-  late double _radius;
+  Offset _knobPosition = Offset.zero;
+  bool _isDragging = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _radius = widget.size / 2;
-  }
-
-  void _updateOffset(Offset localPosition) {
-    final center = Offset(_radius, _radius);
-    Offset offset = localPosition - center;
-    if (offset.distance > _radius) {
-      offset = Offset.fromDirection(offset.direction, _radius);
-    }
-    setState(() {
-      _knobOffset = offset;
-    });
-    // Normalize to -1..1
-    final normalizedX = (offset.dx / _radius);
-    final normalizedY = -(offset.dy / _radius);
-    widget.onChanged(normalizedX, normalizedY);
-  }
-
-  void _resetKnob() {
-    setState(() {
-      _knobOffset = Offset.zero;
-    });
-    widget.onChanged(0, 0);
-  }
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanStart: (details) => _updateOffset(details.localPosition),
-      onPanUpdate: (details) => _updateOffset(details.localPosition),
-      onPanEnd: (_) => _resetKnob(),
-      child: Container(
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: const Color(0xFF1c1c1e), // iOS dark gray background
-          border: Border.all(
-            color: const Color(0xFF38383a), // iOS border color
-            width: 1,
+    final double radius = widget.size / 2;
+    final double knobRadius = radius * 0.3;
+
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: GestureDetector(
+        onPanStart: (details) {
+          setState(() {
+            _isDragging = true;
+          });
+        },
+        onPanUpdate: (details) {
+          final RenderBox renderBox = context.findRenderObject() as RenderBox;
+          final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
+          final Offset center = Offset(radius, radius);
+          final Offset delta = localPosition - center;
+          final double distance = delta.distance;
+
+          if (distance <= radius - knobRadius) {
+            setState(() {
+              _knobPosition = delta;
+            });
+          } else {
+            final Offset normalized = delta / distance;
+            setState(() {
+              _knobPosition = normalized * (radius - knobRadius);
+            });
+          }
+
+          // Normalize values to -1.0 to 1.0 range
+          final double normalizedX = _knobPosition.dx / (radius - knobRadius);
+          final double normalizedY = -_knobPosition.dy / (radius - knobRadius); // Invert Y axis
+          
+          widget.onChanged(normalizedX, normalizedY);
+        },
+        onPanEnd: (details) {
+          setState(() {
+            _knobPosition = Offset.zero;
+            _isDragging = false;
+          });
+          widget.onChanged(0, 0);
+        },
+        child: CustomPaint(
+          size: Size(widget.size, widget.size),
+          painter: _JoystickPainter(
+            knobPosition: _knobPosition,
+            isDragging: _isDragging,
+            radius: radius,
+            knobRadius: knobRadius,
           ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: _radius + _knobOffset.dx - 22,
-              top: _radius + _knobOffset.dy - 22,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 77), // 0.3 opacity
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
+}
+
+class _JoystickPainter extends CustomPainter {
+  final Offset knobPosition;
+  final bool isDragging;
+  final double radius;
+  final double knobRadius;
+
+  _JoystickPainter({
+    required this.knobPosition,
+    required this.isDragging,
+    required this.radius,
+    required this.knobRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint basePaint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final Paint borderPaint = Paint()
+      ..color = Colors.white.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final Paint knobPaint = Paint()
+      ..color = isDragging 
+          ? Colors.white.withOpacity(0.9)
+          : Colors.white.withOpacity(0.7)
+      ..style = PaintingStyle.fill;
+
+    final Paint knobShadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.3)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final Offset center = Offset(radius, radius);
+
+    // Draw base circle (invisible boundary)
+    canvas.drawCircle(center, radius - 4, basePaint);
+    canvas.drawCircle(center, radius - 4, borderPaint);
+
+    // Draw center dot
+    canvas.drawCircle(center, 3, Paint()
+      ..color = Colors.white.withOpacity(0.3));
+
+    // Draw knob shadow
+    canvas.drawCircle(
+      center + knobPosition + const Offset(2, 2),
+      knobRadius,
+      knobShadowPaint,
+    );
+
+    // Draw knob
+    canvas.drawCircle(
+      center + knobPosition,
+      knobRadius,
+      knobPaint,
+    );
+
+    // Draw knob highlight
+    canvas.drawCircle(
+      center + knobPosition - Offset(knobRadius * 0.3, knobRadius * 0.3),
+      knobRadius * 0.3,
+      Paint()..color = Colors.white.withOpacity(0.4),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

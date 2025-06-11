@@ -1,9 +1,33 @@
-// ignore_for_file: avoid_print
+import 'dart:developer' as developer;
 
 class Logger {
   static void log(String message) {
-    final now = DateTime.now();
-    final formattedTime = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}.${now.millisecond.toString().padLeft(3, '0')}";
-    print("[$formattedTime] $message");
+    developer.log(message, name: 'GyroCar');
+  }
+  
+  static void error(String message, [Object? error, StackTrace? stackTrace]) {
+    developer.log(
+      message, 
+      name: 'GyroCar', 
+      error: error, 
+      stackTrace: stackTrace,
+      level: 1000 // Error level
+    );
+  }
+  
+  static void warning(String message) {
+    developer.log(
+      message, 
+      name: 'GyroCar', 
+      level: 900 // Warning level
+    );
+  }
+  
+  static void info(String message) {
+    developer.log(
+      message, 
+      name: 'GyroCar', 
+      level: 800 // Info level
+    );
   }
 }

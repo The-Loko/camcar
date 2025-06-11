@@ -109,13 +109,14 @@ class ConnectionService {
         throw Exception('Bluetooth is not supported on this device');
       }
       
-      bool isOn = await fbp.FlutterBluePlus.isOn;
-      if (!isOn) {
+      // Use the new adapter state method
+      var adapterState = await fbp.FlutterBluePlus.adapterState.first;
+      if (adapterState != fbp.BluetoothAdapterState.on) {
         throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
       }
       
-      // Find the device with the matching address
-      List<fbp.BluetoothDevice> devices = fbp.FlutterBluePlus.systemDevices;
+      // Get connected devices properly
+      List<fbp.BluetoothDevice> devices = await fbp.FlutterBluePlus.systemDevices;
       
       // If device not found, try to discover it
       _bluetoothDevice = devices.firstWhere(
@@ -125,7 +126,8 @@ class ConnectionService {
           return fbp.BluetoothDevice.fromId(address);
         },
       );
-        Logger.log('Connecting to device: ${_bluetoothDevice?.remoteId.str} (${_bluetoothDevice?.platformName})');
+
+      Logger.log('Connecting to device: ${_bluetoothDevice?.remoteId.str} (${_bluetoothDevice?.platformName})');
       
       // Ensure device is not already connected
       var connectedDevices = await fbp.FlutterBluePlus.connectedDevices;
@@ -373,21 +375,27 @@ class ConnectionService {
         throw Exception('Bluetooth is not supported on this device');
       }
       
-      bool isOn = await fbp.FlutterBluePlus.isOn;
-      if (!isOn) {
+      // Use the new adapter state method
+      var adapterState = await fbp.FlutterBluePlus.adapterState.first;
+      if (adapterState != fbp.BluetoothAdapterState.on) {
         throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
       }
       
       // Stop any previous scans
       await fbp.FlutterBluePlus.stopScan();
-        // Start fresh scan with longer timeout for better device discovery
+
+      // Start fresh scan with longer timeout for better device discovery
       await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
       
       // Wait for scan results to complete
       await Future.delayed(const Duration(seconds: 10));
       
-      // Get all discovered devices
-      List<fbp.ScanResult> scanResults = fbp.FlutterBluePlus.scanResults.value;
+      // Get scan results properly using stream
+      List<fbp.ScanResult> scanResults = [];
+      await for (var results in fbp.FlutterBluePlus.scanResults) {
+        scanResults = results;
+        break; // Get the current results and break
+      }
       
       Logger.log('Bluetooth scan found ${scanResults.length} devices');
       
@@ -395,7 +403,8 @@ class ConnectionService {
       for (var result in scanResults) {
         Logger.log('Found device: ${result.device.platformName.isNotEmpty ? result.device.platformName : "Unknown"} (${result.device.remoteId.str}) RSSI: ${result.rssi}');
       }
-        // Filter for ESP32 devices with comprehensive matching
+
+      // Filter for ESP32 devices with comprehensive matching
       var filteredResults = scanResults.where((result) {
         final deviceName = result.device.platformName.toLowerCase();
         final deviceId = result.device.remoteId.str.toLowerCase();
@@ -420,7 +429,8 @@ class ConnectionService {
                       
         return isESP32;
       }).toList();
-        // Sort by RSSI (signal strength) to prioritize nearby devices
+
+      // Sort by RSSI (signal strength) to prioritize nearby devices
       filteredResults.sort((a, b) {
         // First prioritize exact "GyroCar" matches
         bool aIsGyroCar = a.device.platformName.toLowerCase() == 'gyrocar';
@@ -443,7 +453,8 @@ class ConnectionService {
       } else {
         Logger.log('Found ${filteredResults.length} potential ESP32 devices');
       }
-        // Convert to our BluetoothDevice model with detailed information
+
+      // Convert to our BluetoothDevice model with detailed information
       return filteredResults.map((result) {
         final deviceName = result.device.platformName.isNotEmpty 
             ? result.device.platformName 

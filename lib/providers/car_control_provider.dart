@@ -64,12 +64,22 @@ class CarControlProvider with ChangeNotifier {
   }
 
   Future<bool> connectWifi(String ipAddress, int port) async {
-    final result = await _connectionService.connectWifi(ipAddress, port);
-    if (result) {
-      cameraUrl = 'http://$ipAddress:$port/stream';
+    try {
+      final result = await _connectionService.connectWifi(ipAddress, port);
+      if (result) {
+        // Validate the camera URL is accessible
+        cameraUrl = 'http://$ipAddress:$port/stream';
+        Logger.log('Camera URL set to: $cameraUrl');
+      } else {
+        Logger.log('Failed to connect to WiFi camera');
+      }
+      notifyListeners();
+      return result;
+    } catch (e) {
+      Logger.log('WiFi connection error in provider: $e');
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
-    return result;
   }
 
   // Send joystick move
@@ -162,20 +172,38 @@ class CarControlProvider with ChangeNotifier {
   }
 
   Future<bool> connectBluetooth(String address) async {
-    final result = await _connectionService.connectBluetooth(address);
-    if (result) {
-      _connectionService.listenForSensorData(_handleSensorJson);
+    try {
+      Logger.log('Attempting Bluetooth connection to: $address');
+      final result = await _connectionService.connectBluetooth(address);
+      if (result) {
+        Logger.log('Bluetooth connected successfully, setting up sensor listener');
+        _connectionService.listenForSensorData(_handleSensorJson);
+      } else {
+        Logger.log('Bluetooth connection failed');
+      }
+      notifyListeners();
+      return result;
+    } catch (e) {
+      Logger.log('Bluetooth connection error in provider: $e');
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
-    return result;
   }
 
   Future<void> disconnect() async {
     await _connectionService.disconnect();
     notifyListeners();
   }
-  Future<List<BluetoothDevice>> scanBluetoothDevices() {
-    return _connectionService.scanBluetoothDevices();
+  Future<List<BluetoothDevice>> scanBluetoothDevices() async {
+    try {
+      Logger.log('Starting Bluetooth device scan from provider');
+      final devices = await _connectionService.scanBluetoothDevices();
+      Logger.log('Scan completed, found ${devices.length} devices');
+      return devices;
+    } catch (e) {
+      Logger.log('Bluetooth scan error in provider: $e');
+      return [];
+    }
   }
 
   Future<List<WiFiNetwork>> scanWifiNetworks() {
