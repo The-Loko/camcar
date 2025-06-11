@@ -358,9 +358,9 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           constraints: const BoxConstraints(maxHeight: 300),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [              Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: const Text(
+            children: [              const Padding(
+                padding: EdgeInsets.only(bottom: 12.0),
+                child: Text(
                   'Choose the ESP32 device for your car. Devices are sorted by signal strength.',
                   style: TextStyle(
                     color: Color(0xFF8e8e93),
