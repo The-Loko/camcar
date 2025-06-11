@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/car_control_provider.dart';
 import '../widgets/connection_panel.dart';
-import '../widgets/control_panel.dart';
 import '../utils/constants.dart';
 import '../widgets/mjpeg_viewer.dart';
 import '../widgets/joystick.dart';
@@ -24,9 +23,8 @@ class HomeScreen extends StatelessWidget {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ConnectionPanel(),
+              crossAxisAlignment: CrossAxisAlignment.stretch,              children: [
+                const ConnectionPanel(),
                 const SizedBox(height: 16),
                 // Video Section
                 if (provider.cameraUrl.isNotEmpty) ...[

@@ -84,7 +84,7 @@ class ConnectionService {
     
     try {
       if (_connectionType == ConnectionType.bluetooth && _bluetoothConnection != null) {
-        _bluetoothConnection!.output.add(Uint8List.fromList(utf8.encode("$jsonData\n")));
+        _bluetoothConnection!.output.add(Uint8List.fromList(utf8.encode('$jsonData\n')));
         // Add timeout to prevent hanging if connection has issues
         await _bluetoothConnection!.output.allSent.timeout(
           const Duration(seconds: 2),
@@ -109,9 +109,8 @@ class ConnectionService {
     if (_connectionStatus != ConnectionStatus.connected || _connectionType != ConnectionType.bluetooth) {
       return false;
     }
-    try {
-      final jsonData = jsonEncode(data);
-      _bluetoothConnection?.output.add(Uint8List.fromList(utf8.encode(jsonData + '\n')));
+    try {      final jsonData = jsonEncode(data);
+      _bluetoothConnection?.output.add(Uint8List.fromList(utf8.encode('$jsonData\n')));
       await _bluetoothConnection?.output.allSent;
       return true;
     } catch (e) {

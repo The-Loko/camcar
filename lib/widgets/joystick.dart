@@ -1,5 +1,4 @@
 // filepath: d:\Devs\Nihal\camcar\lib\widgets\joystick.dart
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 typedef JoystickCallback = void Function(double x, double y);
@@ -8,13 +7,13 @@ class Joystick extends StatefulWidget {
   final double size;
   final JoystickCallback onChanged;
 
-  const Joystick({Key? key, this.size = 150, required this.onChanged}) : super(key: key);
+  const Joystick({super.key, this.size = 150, required this.onChanged});
 
   @override
-  _JoystickState createState() => _JoystickState();
+  JoystickState createState() => JoystickState();
 }
 
-class _JoystickState extends State<Joystick> {
+class JoystickState extends State<Joystick> {
   Offset _knobOffset = Offset.zero;
   late double _radius;
 
@@ -68,7 +67,7 @@ class _JoystickState extends State<Joystick> {
                 child: Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
+                  decoration:                  const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.blueAccent,
                   ),
