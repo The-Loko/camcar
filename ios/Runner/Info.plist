@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ... existing keys ... -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>This app needs Bluetooth access to connect to the car</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>This app needs Bluetooth access to connect to the car</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>This app needs network access to connect to the car via WiFi</string>
+    <key>NSMotionUsageDescription</key>
+    <string>This app needs access to motion sensors to control the car</string>
+    <!-- ... existing keys ... -->
+</dict>
+</plist>
