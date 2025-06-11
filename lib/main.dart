@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:mjpeg/mjpeg.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:flutter_joystick/flutter_joystick.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,69 +60,131 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  // Bluetooth connection and streaming
+  BluetoothConnection? _connection;
+  bool isBtConnected = false;
+  String cameraUrl = 'http://192.168.4.1:80/stream';
+  double distance = 0, temperature = 0, humidity = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _connectBluetooth();
+  }
+
+  Future<void> _connectBluetooth() async {
+    List<BluetoothDevice> devices = await FlutterBluetoothSerial.instance.getBondedDevices();
+    BluetoothDevice? target =
+        devices.firstWhere((d) => d.name == 'GyroCar', orElse: () => null);
+    if (target != null) {
+      BluetoothConnection.connect(target.address).then((conn) {
+        _connection = conn;
+        setState(() => isBtConnected = true);
+        conn.input?.listen(_onDataReceived).onDone(() {
+          setState(() => isBtConnected = false);
+        });
+      }).catchError((_) {});
+    }
+  }
+
+  void _onDataReceived(Uint8List data) {
+    String str = utf8.decode(data).trim();
+    if (str.startsWith('DIST:')) {
+      var parts = str.split(',');
+      for (var p in parts) {
+        if (p.startsWith('DIST:')) distance = double.tryParse(p.split(':')[1]) ?? 0;
+        else if (p.startsWith('TEMP:')) temperature = double.tryParse(p.split(':')[1]) ?? 0;
+        else if (p.startsWith('HUM:')) humidity = double.tryParse(p.split(':')[1]) ?? 0;
+      }
+      setState(() {});
+    }
+  }
+
+  void _sendJoystick(Offset pos) {
+    if (isBtConnected && _connection != null) {
+      var msg = jsonEncode({'x': pos.dx, 'y': pos.dy});
+      _connection!.output.add(utf8.encode(msg + '\n'));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      appBar: AppBar(title: Text(widget.title)),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            // Video stream section
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Mjpeg(
+                  stream: cameraUrl,
+                  isLive: true,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Parameters section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildParameter('Distance', distance.toStringAsFixed(1)),
+                _buildParameter('Temp', temperature.toStringAsFixed(1)),
+                _buildParameter('Hum', humidity.toStringAsFixed(1)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Controls section
+            Row(
+              children: [
+                // Joystick
+                Expanded(
+                  child: Joystick(
+                    mode: JoystickMode.all,
+                    listener: (details) {
+                      _sendJoystick(Offset(details.x, details.y));
+                    },
+                  ),
+                ),
+                const SizedBox(width: 30),
+                // Buttons
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        primary: Colors.red,
+                      ),
+                      child: const Text('Power'),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        primary: Colors.blue,
+                      ),
+                      child: const Text('Mode'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildParameter(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+      ],
     );
   }
 }
