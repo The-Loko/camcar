@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
 import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
 import '../models/control_data.dart';
@@ -46,7 +45,6 @@ class ConnectionService {
       return false;
     }
   }
-
   // Connect via Bluetooth
   Future<bool> connectBluetooth(String address) async {
     _connectionType = ConnectionType.bluetooth;
@@ -56,7 +54,6 @@ class ConnectionService {
     try {
       // For flutter_blue_plus, we need to find the device and connect
       // This is a simplified version - in a real app you'd scan and find the device
-      var devices = fbp.FlutterBluePlus.connectedDevices;
       
       // For demo purposes, we'll simulate a successful connection
       _connectionStatus = ConnectionStatus.connected;
