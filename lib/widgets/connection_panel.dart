@@ -22,184 +22,331 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
     _portController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CarControlProvider>(context);
     final isConnected = provider.connectionStatus == ConnectionStatus.connected;
     
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.all(8),
-      color: AppColors.primaryColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Connection Settings',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.secondaryColor,
-              ),
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1c1c1e), // iOS dark background
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF38383a),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Title
+          Text(
+            'Connection',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
             ),
-            const SizedBox(height: 16),
-              // Bluetooth device selection (simplified)
-            if (!isConnected) ...[              ElevatedButton(
-                onPressed: () async {
-                  // Show dialog with device list
-                  final devices = await provider.scanBluetoothDevices();
-                  
-                  // Guard context use before async gap
-                  if (!mounted) return; 
-                  
-                  // Using a separate function to avoid BuildContext across async gap issue
-                  _showDeviceSelectionDialog(devices);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentColor,
-                ),
-                child: const Text('Scan for Bluetooth Devices'),
-              ),
-            ],
-            
-            const SizedBox(height: 16),
-              // Connection status
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.secondaryColor.withAlpha((0.1 * 255).round()),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    provider.connectionStatus == ConnectionStatus.connected
-                        ? Icons.check_circle
-                        : provider.connectionStatus == ConnectionStatus.connecting
-                            ? Icons.pending
-                            : provider.connectionStatus == ConnectionStatus.error
-                                ? Icons.error
-                                : Icons.cancel,
-                    color: provider.connectionStatus == ConnectionStatus.connected
-                        ? Colors.green
-                        : provider.connectionStatus == ConnectionStatus.connecting
-                            ? Colors.orange
-                            : provider.connectionStatus == ConnectionStatus.error
-                                ? AppColors.errorColor
-                                : Colors.grey,
+          ),
+          const SizedBox(height: 20),
+          
+          // Connection Status
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2c2c2e),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isConnected 
+                        ? const Color(0xFF34c759) // iOS green
+                        : const Color(0xFFff3b30), // iOS red
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      provider.connectionStatus == ConnectionStatus.connected
-                          ? 'Connected'
-                          : provider.connectionStatus == ConnectionStatus.connecting
-                              ? 'Connecting...'
-                              : provider.connectionStatus == ConnectionStatus.error
-                                  ? 'Connection Error'
-                                  : 'Disconnected',
-                      style: const TextStyle(color: AppColors.secondaryColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _getStatusText(provider.connectionStatus),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
-              ),
+                ),
+                if (provider.connectionStatus == ConnectionStatus.connecting)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007aff)),
+                    ),
+                  ),
+              ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // WiFi connection inputs
-            if (provider.connectionType != ConnectionType.bluetooth) ...[              TextField(
-                controller: _ipController,
-                style: const TextStyle(color: AppColors.secondaryColor),
-                decoration: const InputDecoration(
-                  labelText: 'Camera IP',
-                  labelStyle: TextStyle(color: AppColors.secondaryColor),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.secondaryColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.accentColor),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),              TextField(
-                controller: _portController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: AppColors.secondaryColor),
-                decoration: const InputDecoration(
-                  labelText: 'Port',
-                  labelStyle: TextStyle(color: AppColors.secondaryColor),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.secondaryColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.accentColor),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () {
-                  final ip = _ipController.text.trim();
-                  final port = int.tryParse(_portController.text.trim()) ?? 80;
-                  provider.connectWifi(ip, port);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentColor,
-                ),
-                child: const Text('Connect Camera WiFi'),
-              ),
-              const SizedBox(height: 16),
-            ],
-            
-            // Scan & Connect / Disconnect Button
-            ElevatedButton(
-              onPressed: () async {                if (provider.connectionStatus == ConnectionStatus.connected) {
-                  provider.disconnect();
-                } else {                  final devices = await provider.scanBluetoothDevices();
-                  if (!mounted) return;
-                  _showDeviceSelectionDialog(devices);
-                }
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Bluetooth Section
+          if (!isConnected) ...[
+            _buildIOSButton(
+              label: 'Scan for Devices',
+              color: const Color(0xFF007aff), // iOS blue
+              onPressed: () async {
+                final devices = await provider.scanBluetoothDevices();
+                if (!mounted) return;
+                _showDeviceSelectionDialog(devices);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isConnected ? Colors.red : AppColors.accentColor,
-              ),
-              child: Text(isConnected ? 'Disconnect' : 'Scan & Connect'),
             ),
+            const SizedBox(height: 12),
           ],
+          
+          // WiFi Section for Camera
+          if (provider.connectionType != ConnectionType.bluetooth) ...[
+            _buildIOSTextField(
+              controller: _ipController,
+              label: 'Camera IP Address',
+              placeholder: '192.168.1.100',
+            ),
+            const SizedBox(height: 12),
+            _buildIOSTextField(
+              controller: _portController,
+              label: 'Port',
+              placeholder: '80',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            _buildIOSButton(
+              label: 'Connect Camera',
+              color: const Color(0xFF007aff),
+              onPressed: () {
+                final ip = _ipController.text.trim();
+                final port = int.tryParse(_portController.text.trim()) ?? 80;
+                provider.connectWifi(ip, port);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+          
+          // Main Action Button
+          _buildIOSButton(
+            label: isConnected ? 'Disconnect' : 'Connect',
+            color: isConnected 
+                ? const Color(0xFFff3b30) // iOS red
+                : const Color(0xFF34c759), // iOS green
+            onPressed: () async {
+              if (isConnected) {
+                provider.disconnect();
+              } else {
+                final devices = await provider.scanBluetoothDevices();
+                if (!mounted) return;
+                _showDeviceSelectionDialog(devices);
+              }
+            },
+          ),
+        ],
+      ),
+    );  }
+  
+  String _getStatusText(ConnectionStatus status) {
+    switch (status) {
+      case ConnectionStatus.connected:
+        return 'Connected';
+      case ConnectionStatus.connecting:
+        return 'Connecting...';
+      case ConnectionStatus.error:
+        return 'Connection Error';
+      case ConnectionStatus.disconnected:
+      default:
+        return 'Disconnected';
+    }
+  }
+  
+  Widget _buildIOSButton({
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onPressed,
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
-    // Helper method to show device selection dialog
-  void _showDeviceSelectionDialog(List<BluetoothDevice> devices) {
+  
+  Widget _buildIOSTextField({
+    required TextEditingController controller,
+    required String label,
+    required String placeholder,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF8e8e93),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF2c2c2e),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: const Color(0xFF38383a),
+              width: 1,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: const TextStyle(
+                color: Color(0xFF8e8e93),
+                fontSize: 16,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+    // Helper method to show device selection dialog  void _showDeviceSelectionDialog(List<BluetoothDevice> devices) {
     if (!mounted) return;
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Bluetooth Device'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: devices.length,
-            itemBuilder: (context, index) {
-              final device = devices[index];
-              return ListTile(
-                title: Text(device.name),
-                subtitle: Text(device.address),
-                onTap: () {
-                  Navigator.of(context).pop(device);
-                },
-              );
-            },
+        backgroundColor: const Color(0xFF1c1c1e),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Select Device',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
+        ),
+        content: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxHeight: 300),
+          child: devices.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'No devices found',
+                    style: TextStyle(
+                      color: Color(0xFF8e8e93),
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: devices.length,
+                  separatorBuilder: (context, index) => Divider(
+                    color: const Color(0xFF38383a),
+                    height: 1,
+                  ),
+                  itemBuilder: (context, index) {
+                    final device = devices[index];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2c2c2e),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        title: Text(
+                          device.name.isNotEmpty ? device.name : 'Unknown Device',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          device.address,
+                          style: const TextStyle(
+                            color: Color(0xFF8e8e93),
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios,
+                          color: Color(0xFF8e8e93),
+                          size: 16,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).pop(device);
+                        },
+                      ),
+                    );
+                  },
+                ),
         ),
         actions: [
           TextButton(
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             onPressed: () {
               Navigator.of(context).pop();
             },

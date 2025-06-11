@@ -44,7 +44,6 @@ class JoystickState extends State<Joystick> {
     });
     widget.onChanged(0, 0);
   }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -56,25 +55,34 @@ class JoystickState extends State<Joystick> {
         height: widget.size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.grey[300],
+          color: const Color(0xFF1c1c1e), // iOS dark gray background
+          border: Border.all(
+            color: const Color(0xFF38383a), // iOS border color
+            width: 1,
+          ),
         ),
-        child: Center(
-          child: Stack(
-            children: [
-              Positioned(
-                left: _radius + _knobOffset.dx - 20,
-                top: _radius + _knobOffset.dy - 20,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration:                  const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.blueAccent,
-                  ),
+        child: Stack(
+          children: [
+            Positioned(
+              left: _radius + _knobOffset.dx - 22,
+              top: _radius + _knobOffset.dy - 22,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
