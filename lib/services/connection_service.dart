@@ -115,22 +115,8 @@ class ConnectionService {
         throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
       }
       
-      // Get connected devices properly (systemDevices is a getter, not a function)
-      List<fbp.BluetoothDevice> devices = fbp.FlutterBluePlus.systemDevices;
-      
-      // If device not found, try to discover it
-      _bluetoothDevice = devices.firstWhere(
-        (device) => device.remoteId.str == address,
-        orElse: () {
-          Logger.log('Device not found in known devices, attempting to create it');
-          return fbp.BluetoothDevice.fromId(address);
-        },
-      );
-
-      Logger.log('Connecting to device: ${_bluetoothDevice?.remoteId.str} (${_bluetoothDevice?.platformName})');
-      
-      // Ensure device is not already connected
-      var connectedDevices = await fbp.FlutterBluePlus.connectedDevices;
+      // Get connected devices properly (connectedDevices is a getter, not a function)
+      List<fbp.BluetoothDevice> connectedDevices = fbp.FlutterBluePlus.connectedDevices;
       if (connectedDevices.any((device) => device.remoteId.str == address)) {
         Logger.log('Device already connected, disconnecting first');
         await _bluetoothDevice!.disconnect();
