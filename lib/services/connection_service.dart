@@ -1,10 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
+import '../models/control_data.dart';
+import '../models/bluetooth_device.dart' as custom_bt;
+import '../models/wifi_network.dart';
+import '../utils/logger.dart';art:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
 import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
 import '../models/control_data.dart';
-import '../models/bluetooth_device.dart' as custom;
+import '../models/bluetooth_device.dart' as custom_bt;
 import '../models/wifi_network.dart';
 import '../utils/logger.dart';
 
@@ -12,12 +20,11 @@ import '../utils/logger.dart';
 enum ConnectionType { wifi, bluetooth, none }
 enum ConnectionStatus { connected, disconnected, connecting, error }
 
-class ConnectionService {
-  ConnectionType _connectionType = ConnectionType.none;
+class ConnectionService {  ConnectionType _connectionType = ConnectionType.none;
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
-  fbp.BluetoothDevice? _bluetoothDevice;
-  fbp.BluetoothCharacteristic? _writeCharacteristic;
-  fbp.BluetoothCharacteristic? _readCharacteristic;
+  BluetoothDevice? _bluetoothDevice;
+  BluetoothCharacteristic? _writeCharacteristic;
+  BluetoothCharacteristic? _readCharacteristic;
   String _errorMessage = '';
   String _targetAddress = '';
   StreamSubscription<List<int>>? _dataSubscription;
@@ -53,10 +60,9 @@ class ConnectionService {
     _connectionStatus = ConnectionStatus.connecting;
     _targetAddress = address;
     
-    try {
-      // For flutter_blue_plus, we need to find the device and connect
+    try {      // For flutter_blue_plus, we need to find the device and connect
       // This is a simplified version - in a real app you'd scan and find the device
-      var devices = await FlutterBluePlus.connectedDevices;
+      var devices = FlutterBluePlus.connectedDevices;
       
       // For demo purposes, we'll simulate a successful connection
       _connectionStatus = ConnectionStatus.connected;
@@ -130,15 +136,14 @@ class ConnectionService {
         } catch (_) {}      });
     }
   }
-
   // Scan for Bluetooth devices
-  Future<List<custom.BluetoothDevice>> scanBluetoothDevices() async {
+  Future<List<custom_bt.BluetoothDevice>> scanBluetoothDevices() async {
     try {
       // For flutter_blue_plus, we'll return some mock devices for now
       // In a real implementation, you'd use FlutterBluePlus.startScan()
       return [
-        custom.BluetoothDevice(name: 'GyroCar', address: '00:11:22:33:44:55'),
-        custom.BluetoothDevice(name: 'ESP32-CAM', address: '00:11:22:33:44:56'),
+        custom_bt.BluetoothDevice(name: 'GyroCar', address: '00:11:22:33:44:55'),
+        custom_bt.BluetoothDevice(name: 'ESP32-CAM', address: '00:11:22:33:44:56'),
       ];
     } catch (e) {
       _errorMessage = "Bluetooth scan failed: ${e.toString()}";
