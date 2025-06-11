@@ -1,4 +1,3 @@
-// filepath: d:\Devs\Nihal\camcar\lib\widgets\joystick.dart
 import 'package:flutter/material.dart';
 
 typedef JoystickCallback = void Function(double x, double y);
@@ -43,7 +42,9 @@ class JoystickState extends State<Joystick> {
       _knobOffset = Offset.zero;
     });
     widget.onChanged(0, 0);
-  }  @override
+  }
+  
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: widget.size,
@@ -63,29 +64,28 @@ class JoystickState extends State<Joystick> {
               width: 1,
             ),
           ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: _radius + _knobOffset.dx - 22,
-                  top: _radius + _knobOffset.dy - 22,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 77), // 0.3 opacity
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: _radius + _knobOffset.dx - 22,
+                top: _radius + _knobOffset.dy - 22,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 77), // 0.3 opacity
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
