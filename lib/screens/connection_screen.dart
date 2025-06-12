@@ -143,9 +143,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
               ),
               
               const Spacer(),
-                // Footer
-              const Text(
-                'Make sure your ESP32 camera and car are powered on',
+                // Footer              const Text(
+                'Enter your ESP32-CAM IP address (local or WAN)',
                 style: TextStyle(
                   color: Color(0xFF8e8e93),
                   fontSize: 14,
@@ -287,15 +286,9 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         throw Exception('Please enter a valid IP address (e.g., 192.168.1.100)');
       }      final port = int.tryParse(_portController.text.trim()) ?? 80;
 
-      // Connect to camera first and wait for it to complete
-      final wifiConnected = await provider.connectWifi(ip, port);
-      
-      if (!wifiConnected) {
-        throw Exception('Failed to connect to camera at $ip:$port. Please check the IP address and make sure the camera is accessible.');
-      }
-      
-      // Set the camera URL for streaming
-      provider.cameraUrl = 'http://$ip:$port/stream';      // Now scan for Bluetooth devices
+      // Set the camera URL for streaming (no need to test connection here)
+      // The camera stream will be validated when actually viewing it
+      provider.cameraUrl = 'http://$ip:$port/stream';// Now scan for Bluetooth devices
       final devices = await provider.scanBluetoothDevices();
       
       if (!mounted) return;
