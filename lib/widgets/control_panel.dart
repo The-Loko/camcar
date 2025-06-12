@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/car_control_provider.dart';
 import '../utils/constants.dart';
-import '../services/connection_service.dart';
 
 class ControlPanel extends StatelessWidget {
   const ControlPanel({super.key});
