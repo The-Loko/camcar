@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/car_control_provider.dart';
 import '../services/connection_service.dart';
+import '../services/permission_service.dart';
 import '../models/bluetooth_device.dart';
 import 'control_screen.dart';
 
@@ -284,20 +285,25 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       final ipRegex = RegExp(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$');
       if (!ipRegex.hasMatch(ip)) {
         throw Exception('Please enter a valid IP address (e.g., 192.168.1.100)');
+      }      final port = int.tryParse(_portController.text.trim()) ?? 80;
+
+      // Connect to camera first and wait for it to complete
+      final wifiConnected = await provider.connectWifi(ip, port);
+      
+      if (!wifiConnected) {
+        throw Exception('Failed to connect to camera at $ip:$port. Please check the IP address and make sure the camera is accessible.');
       }
-
-      final port = int.tryParse(_portController.text.trim()) ?? 80;
-
-      // Connect to camera
-      provider.connectWifi(ip, port);
-
-      // Scan for Bluetooth devices
+      
+      // Set the camera URL for streaming
+      provider.cameraUrl = 'http://$ip:$port/stream';      // Now scan for Bluetooth devices
       final devices = await provider.scanBluetoothDevices();
       
       if (!mounted) return;
 
       if (devices.isEmpty) {
-        throw Exception('No Bluetooth devices found. Make sure your car is powered on and in pairing mode.');
+        // Show a more detailed error with troubleshooting steps
+        _showNoDevicesFoundDialog();
+        return;
       }
 
       // Show device selection dialog
@@ -322,14 +328,18 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         } else {
           throw Exception('Failed to connect to Bluetooth device');
         }
-      }
-    } catch (e) {
+      }    } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-        });
+        // Check if it's a permission-related error
+        if (e.toString().contains('permission') || e.toString().contains('Permission')) {
+          _showPermissionHelpDialog();
+        } else {
+          setState(() {
+            _errorMessage = e.toString().replaceAll('Exception: ', '');
+          });
+        }
       }
-    } finally {
+    }finally {
       if (mounted) {
         setState(() {
           _isConnecting = false;
@@ -519,6 +529,207 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                 color: Color(0xFF007aff),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1c1c1e),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Permissions Required',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: const Text(
+          'To scan for Bluetooth devices, this app needs:\n\n'
+          '• Bluetooth permissions\n'
+          '• Location permissions\n\n'
+          'Location is required by Android for Bluetooth device scanning.\n\n'
+          'Would you like to grant these permissions?',
+          style: TextStyle(
+            color: Color(0xFF8e8e93),
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              'Not Now',
+              style: TextStyle(
+                color: Color(0xFF8e8e93),
+                fontSize: 16,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text(
+              'Grant Permissions',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              bool granted = await PermissionService.requestBluetoothPermissions();
+              if (granted) {
+                _scanAndShowDevices();
+              } else {
+                _showPermissionDeniedDialog();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1c1c1e),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Permissions Denied',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: const Text(
+          'Bluetooth and location permissions are required to scan for devices.\n\n'
+          'Please enable them in your app settings to continue.',
+          style: TextStyle(
+            color: Color(0xFF8e8e93),
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF8e8e93),
+                fontSize: 16,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text(
+              'Open Settings',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),            onPressed: () async {
+              Navigator.of(context).pop();
+              await PermissionService.openSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scanAndShowDevices() async {
+    try {
+      final provider = Provider.of<CarControlProvider>(context, listen: false);
+      final devices = await provider.scanBluetoothDevices();
+      
+      if (devices.isEmpty) {
+        _showNoDevicesFoundDialog();
+      } else {
+        _showDeviceSelectionDialog(devices);
+      }
+    } catch (e) {
+      if (e.toString().contains('permission')) {
+        _showPermissionHelpDialog();
+      } else {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  void _showNoDevicesFoundDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1c1c1e),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'No Devices Found',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: const Text(
+          'No Bluetooth devices were found.\n\n'
+          'Troubleshooting:\n'
+          '• Make sure your ESP32 car is powered on\n'
+          '• Ensure ESP32 is advertising as "GyroCar"\n'
+          '• Check that Location services are enabled\n'
+          '• Try moving closer to the ESP32 device\n'
+          '• Restart the ESP32 and try again',
+          style: TextStyle(
+            color: Color(0xFF8e8e93),
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              'Try Again',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _scanAndShowDevices();
+            },
+          ),
+          TextButton(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF8e8e93),
+                fontSize: 16,
               ),
             ),
             onPressed: () {

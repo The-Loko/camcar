@@ -7,6 +7,7 @@ import '../models/control_data.dart';
 import '../models/bluetooth_device.dart' as bt_device;
 import '../models/wifi_network.dart';
 import '../utils/logger.dart';
+import 'permission_service.dart';
 
 enum ConnectionType { wifi, bluetooth, none }
 enum ConnectionStatus { connected, disconnected, connecting, error }
@@ -355,35 +356,98 @@ class ConnectionService {
     try {
       Logger.log('Starting Bluetooth scan');
       
+      // First check and request permissions
+      Logger.log('Checking Bluetooth permissions');
+      bool hasPermissions = await PermissionService.hasBluetoothPermissions();
+      
+      if (!hasPermissions) {
+        Logger.log('Bluetooth permissions not granted, requesting permissions');
+        bool granted = await PermissionService.requestBluetoothPermissions();
+        if (!granted) {
+          throw Exception('Bluetooth and location permissions are required for device scanning. Please grant permissions in app settings.');
+        }
+      }
+      
       // Check if Bluetooth is supported and enabled
       bool isSupported = await fbp.FlutterBluePlus.isSupported;
       if (!isSupported) {
         throw Exception('Bluetooth is not supported on this device');
       }
       
-      // Use the new adapter state method
-      var adapterState = await fbp.FlutterBluePlus.adapterState.first;
+      Logger.log('Bluetooth is supported, checking adapter state');
+      
+      // Use the new adapter state method with timeout
+      var adapterState = await fbp.FlutterBluePlus.adapterState.first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => fbp.BluetoothAdapterState.unknown,
+      );
+      
+      Logger.log('Bluetooth adapter state: $adapterState');
+      
       if (adapterState != fbp.BluetoothAdapterState.on) {
         throw Exception('Bluetooth is turned off. Please enable Bluetooth and try again.');
       }
       
       // Stop any previous scans
+      Logger.log('Stopping any previous scans');
       await fbp.FlutterBluePlus.stopScan();
+      await Future.delayed(const Duration(milliseconds: 500)); // Give it time to stop
 
       // Start fresh scan with longer timeout for better device discovery
-      await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
+      Logger.log('Starting new Bluetooth scan');
+      await fbp.FlutterBluePlus.startScan(
+        timeout: const Duration(seconds: 15), // Increased timeout
+        androidUsesFineLocation: true, // Explicitly request fine location on Android
+      );
       
-      // Wait for scan results to complete
-      await Future.delayed(const Duration(seconds: 10));
+      // Wait for scan results to populate
+      await Future.delayed(const Duration(seconds: 12));
       
-      // Get scan results properly using stream
+      Logger.log('Collecting scan results');
+      
+      // Get scan results properly using stream with timeout
       List<fbp.ScanResult> scanResults = [];
-      await for (var results in fbp.FlutterBluePlus.scanResults) {
-        scanResults = results;
-        break; // Get the current results and break
+      try {
+        scanResults = await fbp.FlutterBluePlus.scanResults.first.timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => [],
+        );
+      } catch (e) {
+        Logger.log('Error getting scan results: $e');
+        scanResults = [];
       }
       
       Logger.log('Bluetooth scan found ${scanResults.length} devices');
+      
+      // If no devices found, try getting already connected devices
+      if (scanResults.isEmpty) {
+        Logger.log('No scan results, checking connected devices');
+        try {
+          List<fbp.BluetoothDevice> connectedDevices = fbp.FlutterBluePlus.connectedDevices;
+          Logger.log('Found ${connectedDevices.length} connected devices');
+          
+          // Convert connected devices to scan results format
+          scanResults = connectedDevices.map((device) => 
+            fbp.ScanResult(
+              device: device,
+              advertisementData: fbp.AdvertisementData(
+                advName: device.platformName,
+                txPowerLevel: null,
+                appearance: null,
+                connectable: true,
+                manufacturerData: {},
+                platformManufacturerData: {},
+                serviceData: {},
+                serviceUuids: [],
+              ),
+              rssi: -50, // Default RSSI for connected devices
+              timeStamp: DateTime.now(),
+            )
+          ).toList();
+        } catch (e) {
+          Logger.log('Error getting connected devices: $e');
+        }
+      }
       
       // Log all discovered devices for debugging
       for (var result in scanResults) {
@@ -428,14 +492,23 @@ class ConnectionService {
         // Then sort by signal strength
         return b.rssi.compareTo(a.rssi);
       });
-      
-      // If no ESP32 devices found, show all discoverable devices but prioritize strong signals
+        // If no ESP32 devices found, show all discoverable devices but prioritize strong signals
       if (filteredResults.isEmpty) {
         Logger.log('No ESP32 devices found, showing all discovered devices');
         filteredResults = scanResults.where((result) => 
           result.device.platformName.isNotEmpty && result.rssi > -100
         ).toList()
         ..sort((a, b) => b.rssi.compareTo(a.rssi));
+        
+        // If still no devices, check for common issues
+        if (filteredResults.isEmpty) {
+          Logger.log('No devices found at all. This could be due to:');
+          Logger.log('1. ESP32 not in pairing/discoverable mode');
+          Logger.log('2. ESP32 not powered on');
+          Logger.log('3. Bluetooth interference');
+          Logger.log('4. Location services disabled');
+          Logger.log('5. Device too far from ESP32');
+        }
       } else {
         Logger.log('Found ${filteredResults.length} potential ESP32 devices');
       }
