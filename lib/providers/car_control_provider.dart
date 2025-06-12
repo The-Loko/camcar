@@ -4,7 +4,7 @@ import '../services/connection_service.dart';
 import '../services/gyroscope_service.dart';
 import '../models/bluetooth_device.dart';
 import '../models/sensor_data.dart';
-import '../utils/logger.dart';
+import '../utils/logger.dart' as utils_logger;
 
 enum ConnectionStatus { disconnected, connecting, connected, error }
 
@@ -43,18 +43,17 @@ class CarControlProvider with ChangeNotifier {
   set cameraUrl(String? url) {
     _cameraUrl = url;
     notifyListeners();
-  }
-  // Scan for Bluetooth devices
+  }  // Scan for Bluetooth devices
   Future<List<BluetoothDevice>> scanBluetoothDevices() async {
-    Logger.log('Starting Bluetooth device scan...');
+    utils_logger.Logger().log('Starting Bluetooth device scan...');
     _setConnectionStatus(ConnectionStatus.connecting);
     
     try {
       // Check if Bluetooth is enabled
-      bool isEnabled = await BluetoothService.isBluetoothEnabled();
+      bool isEnabled = await BluetoothService().requestBluetoothEnable();
       if (!isEnabled) {
-        Logger.log('Bluetooth not enabled, requesting enable...');
-        bool enabled = await BluetoothService.requestBluetoothEnable();
+        utils_logger.Logger().log('Bluetooth not enabled, requesting enable...');
+        bool enabled = await BluetoothService().requestBluetoothEnable();
         if (!enabled) {
           throw Exception('Bluetooth must be enabled to scan for devices');
         }
