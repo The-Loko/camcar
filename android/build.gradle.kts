@@ -21,6 +21,7 @@ subprojects {
     // Force all Android library modules to use API 35 (needed for lStar)
     plugins.withId("com.android.library") {
         extensions.configure<LibraryExtension> {
+            // Bump to 35 to satisfy plugin requirements and lStar attribute
             compileSdk = 35
             namespace = when (project.name) {
                 "flutter_bluetooth_serial" -> "io.github.edufolly.flutterbluetoothserial"
