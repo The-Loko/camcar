@@ -13,16 +13,19 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-    
-    // ensure app is evaluated last
+      // ensure app is evaluated last
     project.evaluationDependsOn(":app")
-      // configure Android library modules (plugins) with a namespace
-    plugins.withId("com.android.library") {
-        extensions.configure<LibraryExtension> {
-            // match the plugin's package in its AndroidManifest.xml
-            namespace = "io.github.edufolly.flutterbluetoothserial"
-            // ensure resources link against API 34 (lStar introduced in API 31)
-            compileSdk = 34
+    
+    // Force all Android modules to use API 34
+    afterEvaluate {
+        if (extensions.findByType<LibraryExtension>() != null) {
+            extensions.configure<LibraryExtension> {
+                compileSdk = 34
+                namespace = when (project.name) {
+                    "flutter_bluetooth_serial" -> "io.github.edufolly.flutterbluetoothserial"
+                    else -> namespace ?: "io.github.edufolly.flutterbluetoothserial"
+                }
+            }
         }
     }
 }
