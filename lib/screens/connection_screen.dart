@@ -266,7 +266,6 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       ),
     );
   }
-
   Future<void> _connectToDevices() async {
     setState(() {
       _isConnecting = true;
@@ -275,21 +274,25 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     final provider = Provider.of<CarControlProvider>(context, listen: false);
 
-    try {      // Validate IP address format
+    try {
+      // Validate IP address format
       final ip = _ipController.text.trim();
       if (ip.isEmpty) {
         throw Exception('Please enter a camera IP address');
       }
       
-      // Basic IP validation
+      // Basic IP validation (allow both IPv4 and simple hostnames)
       final ipRegex = RegExp(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$');
-      if (!ipRegex.hasMatch(ip)) {
+      if (!ipRegex.hasMatch(ip) && !ip.contains('.')) {
         throw Exception('Please enter a valid IP address (e.g., 192.168.1.100)');
-      }      final port = int.tryParse(_portController.text.trim()) ?? 80;
+      }
 
-      // Set the camera URL for streaming (no need to test connection here)
-      // The camera stream will be validated when actually viewing it
-      provider.cameraUrl = 'http://$ip:$port/stream';// Now scan for Bluetooth devices
+      final port = int.tryParse(_portController.text.trim()) ?? 80;
+
+      // Set the camera URL for streaming (no connection test needed)
+      provider.cameraUrl = 'http://$ip:$port/stream';
+
+      // Now scan for Bluetooth devices
       final devices = await provider.scanBluetoothDevices();
       
       if (!mounted) return;
@@ -322,18 +325,14 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         } else {
           throw Exception('Failed to connect to Bluetooth device');
         }
-      }    } catch (e) {
-      if (mounted) {
-        // Check if it's a permission-related error
-        if (e.toString().contains('permission') || e.toString().contains('Permission')) {
-          _showPermissionHelpDialog();
-        } else {
-          setState(() {
-            _errorMessage = e.toString().replaceAll('Exception: ', '');
-          });
-        }
       }
-    }finally {
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    } finally {
       if (mounted) {
         setState(() {
           _isConnecting = false;
