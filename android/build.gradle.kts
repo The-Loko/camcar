@@ -16,14 +16,13 @@ subprojects {
     
     // ensure app is evaluated last
     project.evaluationDependsOn(":app")
-    
-    // configure Android library modules (plugins) with a namespace
+      // configure Android library modules (plugins) with a namespace
     plugins.withId("com.android.library") {
         extensions.configure<LibraryExtension> {
             // match the plugin's package in its AndroidManifest.xml
-            namespace = "com.github.andreociocca.flutter_bluetooth_serial"
-            // ensure resources link against API 33 (lStar introduced in API 31)
-            compileSdk = 33
+            namespace = "io.github.edufolly.flutterbluetoothserial"
+            // ensure resources link against API 34 (lStar introduced in API 31)
+            compileSdk = 34
         }
     }
 }
