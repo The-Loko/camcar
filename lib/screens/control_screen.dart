@@ -222,10 +222,9 @@ class _ControlScreenState extends State<ControlScreen> {
                                   ? const Color(0xFFff9500) 
                                   : const Color(0xFF007aff),
                               onPressed: _isPowerOn ? () {
-                                setState(() {
-                                  _isAutoMode = !_isAutoMode;
+                                setState(() {                                _isAutoMode = !_isAutoMode;
                                 });
-                                provider.sendModeCommand(_isAutoMode ? 'auto' : 'manual');
+                                provider.sendModeCommand(_isAutoMode);
                               } : null,
                             ),
                             

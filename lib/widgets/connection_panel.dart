@@ -111,29 +111,26 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             ),
             const SizedBox(height: 12),
           ],
-          
-          // WiFi Section for Camera
-          if (provider.connectionType != ConnectionType.bluetooth) ...[
-            _buildIOSTextField(
-              controller: _ipController,
-              label: 'Camera IP Address',
-              placeholder: '192.168.1.100',
-            ),
-            const SizedBox(height: 12),
-            _buildIOSTextField(
-              controller: _portController,
-              label: 'Port',
-              placeholder: '80',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
-            _buildIOSButton(
-              label: 'Connect Camera',
-              color: const Color(0xFF007aff),
-              onPressed: () {
+            // WiFi Section for Camera
+          _buildIOSTextField(
+            controller: _ipController,
+            label: 'Camera IP Address',
+            placeholder: '192.168.1.100',
+          ),
+          const SizedBox(height: 12),
+          _buildIOSTextField(
+            controller: _portController,
+            label: 'Port',
+            placeholder: '80',
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          _buildIOSButton(
+            label: 'Connect Camera',
+              color: const Color(0xFF007aff),              onPressed: () async {
                 final ip = _ipController.text.trim();
                 final port = int.tryParse(_portController.text.trim()) ?? 80;
-                provider.connectWifi(ip, port);
+                await provider.connectCamera(ip, port);
               },
             ),
             const SizedBox(height: 20),
