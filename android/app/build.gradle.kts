@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.myapp"
-    compileSdk = 34  // Set to a stable version instead of flutter.compileSdkVersion
+    compileSdk = 35  // Updated to SDK 35 as required by shared_preferences_android
     ndkVersion = "27.0.12077973"   // override to highest required NDK
 
     compileOptions {

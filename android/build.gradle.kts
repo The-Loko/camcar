@@ -22,9 +22,8 @@ subprojects {
         extensions.configure<LibraryExtension> {
             // match the plugin's package in its AndroidManifest.xml
             namespace = "com.github.andreociocca.flutter_bluetooth_serial"
-            
-            // Set consistent compile SDK for all modules
-            compileSdk = 34
+              // Set consistent compile SDK for all modules
+            compileSdk = 35
             
             defaultConfig {
                 minSdk = 21
