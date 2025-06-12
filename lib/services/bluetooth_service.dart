@@ -157,13 +157,12 @@ class BluetoothService {
     }
 
     try {
-      // Create JSON data matching ESP32 expected format
-      Map<String, dynamic> data = {
+      // Create JSON data matching ESP32 expected format      Map<String, dynamic> data = {
         'x': x,
         'y': y,
       };
       
-      String jsonString = jsonEncode(data) + '\n'; // ESP32 expects newline
+      String jsonString = '${jsonEncode(data)}\n'; // ESP32 expects newline
       Logger.log('Sending joystick data: $jsonString');
       
       _connection!.output.add(utf8.encode(jsonString));
@@ -183,14 +182,13 @@ class BluetoothService {
       return false;
     }
 
-    try {
-      // Create command JSON matching ESP32 expected format
+    try {      // Create command JSON matching ESP32 expected format
       Map<String, dynamic> data = {
         'cmd': command,
         'value': value,
       };
       
-      String jsonString = jsonEncode(data) + '\n'; // ESP32 expects newline
+      String jsonString = '${jsonEncode(data)}\n'; // ESP32 expects newline
       Logger.log('Sending command: $jsonString');
       
       _connection!.output.add(utf8.encode(jsonString));
