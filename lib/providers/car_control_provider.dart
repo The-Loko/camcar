@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/bluetooth_service.dart';
+import '../services/connection_service.dart';
 import '../services/gyroscope_service.dart';
 import '../models/bluetooth_device.dart';
 import '../models/sensor_data.dart';
@@ -87,6 +88,38 @@ class CarControlProvider with ChangeNotifier {
       _setError('Bluetooth connection error: $e');
       return false;
     }
+  }
+
+  // Connect to ESP32-CAM WiFi
+  Future<bool> connectCamera(String ipAddress, int port) async {
+    Logger.log('Connecting to camera at $ipAddress:$port');
+    _setConnectionStatus(ConnectionStatus.connecting);
+    
+    try {
+      bool connected = await ConnectionService.testCameraConnection(ipAddress, port);
+      
+      if (connected) {
+        _cameraUrl = ConnectionService.getMjpegStreamUrl();
+        Logger.log('Successfully connected to camera: $_cameraUrl');
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Failed to connect to camera: ${ConnectionService.errorMessage}');
+        return false;
+      }
+      
+    } catch (e) {
+      _setError('Camera connection error: $e');
+      return false;
+    }
+  }
+
+  // Disconnect from camera
+  void disconnectCamera() {
+    ConnectionService.disconnect();
+    _cameraUrl = '';
+    Logger.log('Disconnected from camera');
+    notifyListeners();
   }
 
   // Send joystick data
@@ -199,5 +232,4 @@ class CarControlProvider with ChangeNotifier {
     BluetoothService.disconnect();
     super.dispose();
   }
-}
 }

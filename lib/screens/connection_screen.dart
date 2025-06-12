@@ -265,8 +265,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         ),
       ),
     );
-  }
-  Future<void> _connectToDevices() async {
+  }  Future<void> _connectToDevices() async {
     setState(() {
       _isConnecting = true;
       _errorMessage = null;
@@ -289,8 +288,12 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
       final port = int.tryParse(_portController.text.trim()) ?? 80;
 
-      // Set the camera URL for streaming (no connection test needed)
-      provider.cameraUrl = 'http://$ip:$port/stream';
+      // First connect to camera
+      bool cameraConnected = await provider.connectCamera(ip, port);
+      
+      if (!cameraConnected) {
+        throw Exception('Failed to connect to ESP32-CAM. Please check IP address and ensure camera is online.');
+      }
 
       // Now scan for Bluetooth devices
       final devices = await provider.scanBluetoothDevices();
