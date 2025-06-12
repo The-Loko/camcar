@@ -8,12 +8,12 @@ plugins {
 android {
     namespace = "com.example.myapp"
     compileSdk = 34  // Set to a stable version instead of flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"   // override to highest required NDK
-
-    compileOptions {
+    ndkVersion = "27.0.12077973"   // override to highest required NDK    compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }    kotlinOptions {
+    }
+
+    kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
