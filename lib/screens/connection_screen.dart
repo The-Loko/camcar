@@ -141,9 +141,10 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                   ],
                 ),
               ),
+                const Spacer(),
               
-              const Spacer(),
-                // Footer              const Text(
+              // Footer
+              const Text(
                 'Enter your ESP32-CAM IP address (local or WAN)',
                 style: TextStyle(
                   color: Color(0xFF8e8e93),
