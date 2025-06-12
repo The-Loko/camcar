@@ -1,22 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import '../utils/logger.dart';
 
-enum ConnectionStatus { connected, disconnected, connecting, error }
-
 class ConnectionService {
-  static ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
   static String _errorMessage = '';
   static String _cameraUrl = '';
 
   // Getters
-  static ConnectionStatus get connectionStatus => _connectionStatus;
   static String get errorMessage => _errorMessage;
-  static String get cameraUrl => _cameraUrl;
-  static bool get isConnected => _connectionStatus == ConnectionStatus.connected;  /// Test ESP32-CAM WiFi connection and validate stream
+  static String get cameraUrl => _cameraUrl;  /// Test ESP32-CAM WiFi connection and validate stream
   static Future<bool> testCameraConnection(String ipAddress, int port) async {
-    _connectionStatus = ConnectionStatus.connecting;
     _errorMessage = '';
     
     try {
@@ -45,7 +38,6 @@ class ConnectionService {
             
             // Successfully connected
             _cameraUrl = 'http://$ipAddress:$port/stream';
-            _connectionStatus = ConnectionStatus.connected;
             Logger.log('Successfully connected to ESP32-CAM stream');
             
             // Close the response to avoid memory leaks
@@ -63,7 +55,6 @@ class ConnectionService {
       
     } catch (e) {
       _errorMessage = e.toString();
-      _connectionStatus = ConnectionStatus.error;
       _cameraUrl = '';
       Logger.log('Camera connection error: $_errorMessage');
       return false;
@@ -74,10 +65,8 @@ class ConnectionService {
   static String getMjpegStreamUrl() {
     return _cameraUrl;
   }
-
   /// Disconnect from camera
   static void disconnect() {
-    _connectionStatus = ConnectionStatus.disconnected;
     _errorMessage = '';
     _cameraUrl = '';
     Logger.log('Disconnected from camera');

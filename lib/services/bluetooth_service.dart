@@ -38,11 +38,9 @@ class BluetoothService {
             signalStrength: 'Paired',
           ));
         }
-      }
-
-      // Discover new devices
+      }      // Discover new devices
       Logger.log('Starting device discovery...');
-      bool isDiscovering = await FlutterBluetoothSerial.instance.isDiscovering;
+      bool isDiscovering = await FlutterBluetoothSerial.instance.isDiscovering ?? false;
       if (isDiscovering) {
         await FlutterBluetoothSerial.instance.cancelDiscovery();
       }

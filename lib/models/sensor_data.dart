@@ -18,13 +18,12 @@ class SensorData {
       timestamp: DateTime.now(),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'distance': distance,
       'temperature': temperature,
       'humidity': humidity,
-      'timestamp': timestamp?.toIso8601String(),
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 }

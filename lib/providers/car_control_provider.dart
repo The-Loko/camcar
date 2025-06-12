@@ -13,17 +13,31 @@ class CarControlProvider with ChangeNotifier {
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
   String? _errorMessage;
   String? _cameraUrl;
-    // Sensor data from ESP32
+  
+  // Car control states
+  bool _isPowerOn = false;
+  bool _isAutoMode = false;
+  bool _isControlActive = false;
+  double _sensitivity = 0.5;
+  
+  // Sensor data from ESP32
   SensorData _sensorData = SensorData();
   
   // Gyroscope service
   final GyroscopeService _gyroscopeService = GyroscopeService();
 
   // Getters
-  ConnectionStatus get connectionStatus => _connectionStatus;  String get errorMessage => _errorMessage ?? '';
+  ConnectionStatus get connectionStatus => _connectionStatus;
+  String get errorMessage => _errorMessage ?? '';
   String get cameraUrl => _cameraUrl ?? '';
   SensorData get sensorData => _sensorData;
   bool get isConnected => BluetoothService.isConnected;
+  
+  // Car control getters
+  bool get isPowerOn => _isPowerOn;
+  bool get isAutoMode => _isAutoMode;
+  bool get isControlActive => _isControlActive;
+  double get sensitivity => _sensitivity;
 
   // Set camera URL (no connection needed, just for streaming)
   set cameraUrl(String? url) {
@@ -192,6 +206,46 @@ class CarControlProvider with ChangeNotifier {
       Logger.log('Error during disconnect: $e');
     }
   }
+  
+  // Control methods
+  Future<void> togglePower() async {
+    _isPowerOn = !_isPowerOn;
+    await sendPowerCommand(_isPowerOn);
+    notifyListeners();
+  }
+  
+  Future<void> toggleMode() async {
+    _isAutoMode = !_isAutoMode;
+    await sendModeCommand(_isAutoMode);
+    notifyListeners();
+  }
+  
+  void toggleControl() {
+    _isControlActive = !_isControlActive;
+    if (_isControlActive) {
+      startGyroscopeControl();
+    } else {
+      stopGyroscopeControl();
+    }
+    notifyListeners();
+  }
+  
+  void setSensitivity(double value) {
+    _sensitivity = value.clamp(0.0, 1.0);
+    notifyListeners();
+  }
+  
+  // Send joystick input with name compatibility
+  Future<bool> sendJoystick(double x, double y) async {
+    return await sendJoystickData(x, y);
+  }
+  
+  // Get last control data (for UI display)
+  Map<String, double> get lastControlData => {
+    'x': 0.0, // Would store last joystick X value
+    'y': 0.0, // Would store last joystick Y value
+  };
+
   // Handle incoming sensor data from ESP32
   void _handleSensorData(Map<String, dynamic> data) {
     try {
