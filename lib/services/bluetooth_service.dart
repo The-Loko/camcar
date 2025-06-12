@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_bluetooth_classic_serial/flutter_bluetooth_classic_serial.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/logger.dart' as utils_logger;
 
@@ -35,7 +35,7 @@ class BluetoothService extends ChangeNotifier {
       }
 
       // Check if Bluetooth is enabled
-      bool isEnabled = await FlutterBluetoothClassic.isBluetoothEnabled;
+      bool isEnabled = await FlutterBluetoothSerial.instance.isEnabled;
       if (!isEnabled) {
         _logger.log('Bluetooth is disabled, requesting to enable...');
         // Note: flutter_bluetooth_classic_serial doesn't have direct enable method
@@ -79,7 +79,7 @@ class BluetoothService extends ChangeNotifier {
       _logger.log('Starting Bluetooth device scan...');
       
       // Get paired devices first
-      List<BluetoothDevice> pairedDevices = await FlutterBluetoothClassic.getPairedDevices();
+      List<BluetoothDevice> pairedDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
       _devices = pairedDevices;
       
       _logger.log('Found ${_devices.length} paired devices');
