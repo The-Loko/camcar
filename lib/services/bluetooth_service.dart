@@ -17,12 +17,10 @@ class BluetoothService {
   // Scan for Bluetooth devices (specifically looking for "GyroCar")
   static Future<List<bt_model.BluetoothDevice>> scanForDevices() async {
     Logger.log('Starting Bluetooth Classic device scan...');
-    List<bt_model.BluetoothDevice> devices = [];
-
-    try {
+    List<bt_model.BluetoothDevice> devices = [];    try {
       // Check if Bluetooth is enabled
-      bool? isEnabled = await FlutterBluetoothSerial.instance.isEnabled;
-      if (isEnabled != true) {
+      bool isEnabled = await FlutterBluetoothSerial.instance.isEnabled ?? false;
+      if (!isEnabled) {
         throw Exception('Bluetooth is not enabled. Please turn on Bluetooth and try again.');
       }
 
