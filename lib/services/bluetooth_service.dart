@@ -10,8 +10,6 @@ class BluetoothService extends ChangeNotifier {
   factory BluetoothService() => _instance;
   BluetoothService._internal();
 
-  final utils_logger.Logger _logger = utils_logger.Logger();
-  
   bool _isScanning = false;
   bool _isConnected = false;
   String? _connectedDeviceAddress;
@@ -108,8 +106,8 @@ class BluetoothService extends ChangeNotifier {
 
       utils_logger.Logger.log('Attempting to connect to device: $address');
       
-      // Verify the device is in our list
-      model.BluetoothDevice foundDevice = _devices.firstWhere(
+      // Verify the device is in our list (throws if not found)
+      _devices.firstWhere(
         (d) => d.address == address,
         orElse: () => throw Exception('Device not found'),
       );
