@@ -1,32 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart' as fbp;
-import 'package:wifi_scan/wifi_scan.dart' as wifi_scan;
 import '../models/control_data.dart';
-import '../models/bluetooth_device.dart' as bt_device;
-import '../models/wifi_network.dart';
 import '../utils/logger.dart';
-import 'permission_service.dart';
 
-enum ConnectionType { wifi, bluetooth, none }
+enum ConnectionType { wifi, none }
 enum ConnectionStatus { connected, disconnected, connecting, error }
 
 class ConnectionService {
   ConnectionType _connectionType = ConnectionType.none;
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
-  fbp.BluetoothDevice? _bluetoothDevice;
-  fbp.BluetoothCharacteristic? _writeCharacteristic;
-  fbp.BluetoothCharacteristic? _readCharacteristic;
   String _errorMessage = '';
   String _targetAddress = '';
-  StreamSubscription<List<int>>? _dataSubscription;
 
   // Getters
   ConnectionType get connectionType => _connectionType;
   ConnectionStatus get connectionStatus => _connectionStatus;
   String get errorMessage => _errorMessage;
-  String get targetAddress => _targetAddress;  // Connect via WiFi
+  String get targetAddress => _targetAddress;// Connect via WiFi
   Future<bool> connectWifi(String ipAddress, int port) async {
     _connectionType = ConnectionType.wifi;
     _connectionStatus = ConnectionStatus.connecting;
