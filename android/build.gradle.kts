@@ -1,5 +1,6 @@
 import com.android.build.gradle.LibraryExtension  // add this import
 import com.android.build.api.dsl.ApplicationExtension  // to configure application modules
+import com.android.build.gradle.AppExtension
 import org.gradle.api.file.Directory
 import org.gradle.api.tasks.Delete
 
@@ -13,6 +14,17 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+
+    pluginManager.withPlugin("com.android.library") {
+        extensions.configure<LibraryExtension> {
+            compileSdk = 35
+        }
+    }
+    pluginManager.withPlugin("com.android.application") {
+        extensions.configure<AppExtension> {
+            compileSdkVersion(35)
+        }
     }
 }
 
