@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter_bluetooth_serial_2/flutter_bluetooth_serial_2.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import '../utils/logger.dart';
 import '../models/bluetooth_device.dart' as bt_model;
 
