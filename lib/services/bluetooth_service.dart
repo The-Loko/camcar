@@ -17,7 +17,9 @@ class BluetoothService {
   // Scan for Bluetooth devices (specifically looking for "GyroCar")
   static Future<List<bt_model.BluetoothDevice>> scanForDevices() async {
     Logger.log('Starting Bluetooth Classic device scan...');
-    List<bt_model.BluetoothDevice> devices = [];    try {
+    List<bt_model.BluetoothDevice> devices = [];
+
+    try {
       // Check if Bluetooth is enabled
       bool isEnabled = await FlutterBluetoothSerial.instance.isEnabled ?? false;
       if (!isEnabled) {
@@ -38,7 +40,9 @@ class BluetoothService {
             signalStrength: 'Paired',
           ));
         }
-      }      // Discover new devices
+      }
+
+      // Discover new devices
       Logger.log('Starting device discovery...');
       bool isDiscovering = await FlutterBluetoothSerial.instance.isDiscovering ?? false;
       if (isDiscovering) {
@@ -157,7 +161,8 @@ class BluetoothService {
     }
 
     try {
-      // Create JSON data matching ESP32 expected format      Map<String, dynamic> data = {
+      // Create JSON data matching ESP32 expected format
+      Map<String, dynamic> data = {
         'x': x,
         'y': y,
       };
@@ -182,7 +187,8 @@ class BluetoothService {
       return false;
     }
 
-    try {      // Create command JSON matching ESP32 expected format
+    try {
+      // Create command JSON matching ESP32 expected format
       Map<String, dynamic> data = {
         'cmd': command,
         'value': value,
