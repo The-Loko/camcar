@@ -3,6 +3,12 @@ import com.android.build.api.dsl.ApplicationExtension  // to configure applicati
 import org.gradle.api.file.Directory
 import org.gradle.api.tasks.Delete
 
+// Add buildscript ext overrides
+buildscript {
+    extra.set("compileSdkVersion", 35)
+    extra.set("targetSdkVersion", 35)
+}
+
 allprojects {
     repositories {
         google()
