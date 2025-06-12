@@ -421,12 +421,12 @@ class ConnectionService {
       
       // If no devices found, try getting already connected devices
       if (scanResults.isEmpty) {
-        Logger.log('No scan results, checking connected devices');
-        try {
+        Logger.log('No scan results, checking connected devices');        try {
           List<fbp.BluetoothDevice> connectedDevices = fbp.FlutterBluePlus.connectedDevices;
           Logger.log('Found ${connectedDevices.length} connected devices');
           
-          // Convert connected devices to scan results format          scanResults = connectedDevices.map((device) => 
+          // Convert connected devices to scan results format
+          scanResults = connectedDevices.map((device) => 
             fbp.ScanResult(
               device: device,
               advertisementData: fbp.AdvertisementData(
