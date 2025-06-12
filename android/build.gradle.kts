@@ -1,4 +1,6 @@
 import com.android.build.gradle.LibraryExtension  // add this import
+import org.gradle.api.file.Directory
+import org.gradle.api.tasks.Delete
 
 allprojects {
     repositories {
@@ -16,15 +18,13 @@ subprojects {
       // ensure app is evaluated last
     project.evaluationDependsOn(":app")
     
-    // Force all Android modules to use API 34
-    afterEvaluate {
-        if (extensions.findByType<LibraryExtension>() != null) {
-            extensions.configure<LibraryExtension> {
-                compileSdk = 34
-                namespace = when (project.name) {
-                    "flutter_bluetooth_serial" -> "io.github.edufolly.flutterbluetoothserial"
-                    else -> namespace ?: "io.github.edufolly.flutterbluetoothserial"
-                }
+    // Force all Android library modules to use API 34
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension> {
+            compileSdk = 34
+            namespace = when (project.name) {
+                "flutter_bluetooth_serial" -> "io.github.edufolly.flutterbluetoothserial"
+                else -> namespace ?: "io.github.edufolly.flutterbluetoothserial"
             }
         }
     }
