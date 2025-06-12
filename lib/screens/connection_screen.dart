@@ -673,7 +673,6 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       }
     }
   }
-
   void _showNoDevicesFoundDialog() {
     showDialog(
       context: context,
@@ -690,20 +689,41 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        content: const Text(
-          'No Bluetooth devices were found.\n\n'
-          'Troubleshooting:\n'
-          '• Make sure your ESP32 car is powered on\n'
-          '• Ensure ESP32 is advertising as "GyroCar"\n'
-          '• Check that Location services are enabled\n'
-          '• Try moving closer to the ESP32 device\n'
-          '• Restart the ESP32 and try again',
-          style: TextStyle(
-            color: Color(0xFF8e8e93),
-            fontSize: 14,
+        content: const SingleChildScrollView(
+          child: Text(
+            'No Bluetooth devices were found.\n\n'
+            'Troubleshooting Steps:\n\n'
+            '1. Make sure your ESP32 car is powered on\n'
+            '2. Ensure ESP32 is advertising as "GyroCar"\n'
+            '3. Check that Location services are enabled in Android Settings\n'
+            '4. Verify Bluetooth is enabled and working\n'
+            '5. Try manually pairing the device in Android Settings first\n'
+            '6. Move closer to the ESP32 device (within 10 meters)\n'
+            '7. Restart the ESP32 and try again\n'
+            '8. Clear Bluetooth cache in Android Settings > Apps > Bluetooth\n\n'
+            'If the device appears in Android Bluetooth settings but not here, '
+            'there may be a permission issue.',
+            style: TextStyle(
+              color: Color(0xFF8e8e93),
+              fontSize: 14,
+            ),
           ),
         ),
         actions: [
+          TextButton(
+            child: const Text(
+              'Check Permissions',
+              style: TextStyle(
+                color: Color(0xFF007aff),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showPermissionHelpDialog();
+            },
+          ),
           TextButton(
             child: const Text(
               'Try Again',
