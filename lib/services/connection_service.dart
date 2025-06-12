@@ -426,8 +426,7 @@ class ConnectionService {
           List<fbp.BluetoothDevice> connectedDevices = fbp.FlutterBluePlus.connectedDevices;
           Logger.log('Found ${connectedDevices.length} connected devices');
           
-          // Convert connected devices to scan results format
-          scanResults = connectedDevices.map((device) => 
+          // Convert connected devices to scan results format          scanResults = connectedDevices.map((device) => 
             fbp.ScanResult(
               device: device,
               advertisementData: fbp.AdvertisementData(
@@ -436,7 +435,6 @@ class ConnectionService {
                 appearance: null,
                 connectable: true,
                 manufacturerData: {},
-                platformManufacturerData: {},
                 serviceData: {},
                 serviceUuids: [],
               ),

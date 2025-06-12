@@ -22,13 +22,12 @@ class PermissionService {
       for (var entry in statuses.entries) {
         Logger.log('${entry.key.toString()}: ${entry.value.toString()}');
       }
-      
-      // Check if all critical permissions are granted
-      bool bluetoothGranted = statuses[Permission.bluetooth]?.isGranted ?? false;
-      bool bluetoothScanGranted = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-      bool bluetoothConnectGranted = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
-      bool locationGranted = statuses[Permission.location]?.isGranted ?? false || 
-                            statuses[Permission.locationWhenInUse]?.isGranted ?? false;
+        // Check if all critical permissions are granted
+      bool bluetoothGranted = statuses[Permission.bluetooth]?.isGranted == true;
+      bool bluetoothScanGranted = statuses[Permission.bluetoothScan]?.isGranted == true;
+      bool bluetoothConnectGranted = statuses[Permission.bluetoothConnect]?.isGranted == true;
+      bool locationGranted = (statuses[Permission.location]?.isGranted == true) || 
+                            (statuses[Permission.locationWhenInUse]?.isGranted == true);
       
       // For older Android versions, only bluetooth and location are needed
       bool allGranted = (bluetoothGranted || bluetoothScanGranted) && 
@@ -77,12 +76,11 @@ class PermissionService {
       for (var permission in permissions) {
         statuses[permission] = await permission.status;
       }
-      
-      bool bluetoothGranted = statuses[Permission.bluetooth]?.isGranted ?? false;
-      bool bluetoothScanGranted = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-      bool bluetoothConnectGranted = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
-      bool locationGranted = statuses[Permission.location]?.isGranted ?? false || 
-                            statuses[Permission.locationWhenInUse]?.isGranted ?? false;
+        bool bluetoothGranted = statuses[Permission.bluetooth]?.isGranted == true;
+      bool bluetoothScanGranted = statuses[Permission.bluetoothScan]?.isGranted == true;
+      bool bluetoothConnectGranted = statuses[Permission.bluetoothConnect]?.isGranted == true;
+      bool locationGranted = (statuses[Permission.location]?.isGranted == true) || 
+                            (statuses[Permission.locationWhenInUse]?.isGranted == true);
       
       return (bluetoothGranted || bluetoothScanGranted) && 
              (bluetoothConnectGranted || bluetoothGranted) && 
