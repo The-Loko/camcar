@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/logger.dart' as utils_logger;
+import '../models/bluetooth_device.dart' as model;
 
 class BluetoothService extends ChangeNotifier {
   static final BluetoothService _instance = BluetoothService._internal();
@@ -15,38 +15,38 @@ class BluetoothService extends ChangeNotifier {
   bool _isScanning = false;
   bool _isConnected = false;
   String? _connectedDeviceAddress;
-  List<BluetoothDevice> _devices = [];
+  List<model.BluetoothDevice> _devices = [];
   Function(String)? _dataCallback;
   BluetoothConnection? _connection;
 
   bool get isScanning => _isScanning;
   bool get isConnected => _isConnected;
   String? get connectedDeviceAddress => _connectedDeviceAddress;
-  List<BluetoothDevice> get devices => _devices;
+  List<model.BluetoothDevice> get devices => _devices;
 
   Future<bool> requestBluetoothEnable() async {
     try {
-      _logger.log('Requesting Bluetooth enable...');
+      utils_logger.Logger.log('Requesting Bluetooth enable...');
       
       // Check and request Bluetooth permissions
       if (!await _requestBluetoothPermissions()) {
-        _logger.error('Bluetooth permissions denied');
+        utils_logger.Logger.error('Bluetooth permissions denied');
         return false;
       }
 
       // Check if Bluetooth is enabled
-      bool isEnabled = await FlutterBluetoothSerial.instance.isEnabled;
+      bool isEnabled = (await FlutterBluetoothSerial.instance.isEnabled) ?? false;
       if (!isEnabled) {
-        _logger.log('Bluetooth is disabled, requesting to enable...');
+        utils_logger.Logger.log('Bluetooth is disabled, requesting to enable...');
         // Note: flutter_bluetooth_classic_serial doesn't have direct enable method
         // User needs to enable manually through system settings
         return false;
       }
       
-      _logger.log('Bluetooth is enabled');
+      utils_logger.Logger.log('Bluetooth is enabled');
       return true;
     } catch (e) {
-      _logger.error('Error requesting Bluetooth enable: $e');
+      utils_logger.Logger.error('Error requesting Bluetooth enable: $e');
       return false;
     }
   }
@@ -64,25 +64,27 @@ class BluetoothService extends ChangeNotifier {
           status == PermissionStatus.granted || 
           status == PermissionStatus.permanentlyDenied);
     } catch (e) {
-      _logger.error('Error requesting permissions: $e');
+      utils_logger.Logger.error('Error requesting permissions: $e');
       return false;
     }
   }
 
-  Future<List<BluetoothDevice>> scanForDevices() async {
+  Future<List<model.BluetoothDevice>> scanForDevices() async {
     if (_isScanning) return _devices;
     
     try {
       _isScanning = true;
       notifyListeners();
       
-      _logger.log('Starting Bluetooth device scan...');
+      utils_logger.Logger.log('Starting Bluetooth device scan...');
       
       // Get paired devices first
-      List<BluetoothDevice> pairedDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
-      _devices = pairedDevices;
+      var paired = await FlutterBluetoothSerial.instance.getBondedDevices();
+      _devices = paired
+          .map((d) => model.BluetoothDevice.fromFlutterBluetoothSerial(d))
+          .toList();
       
-      _logger.log('Found ${_devices.length} paired devices');
+      utils_logger.Logger.log('Found ${_devices.length} paired devices');
       
       // Note: flutter_bluetooth_classic_serial primarily works with paired devices
       // Discovery of new devices might require different approach
@@ -90,7 +92,7 @@ class BluetoothService extends ChangeNotifier {
       notifyListeners();
       return _devices;
     } catch (e) {
-      _logger.error('Error scanning for devices: $e');
+      utils_logger.Logger.error('Error scanning for devices: $e');
       return [];
     } finally {
       _isScanning = false;
@@ -104,9 +106,10 @@ class BluetoothService extends ChangeNotifier {
         await disconnect();
       }
 
-      _logger.log('Attempting to connect to device: $address');
+      utils_logger.Logger.log('Attempting to connect to device: $address');
       
-      BluetoothDevice? device = _devices.firstWhere(
+      // Verify the device is in our list
+      model.BluetoothDevice foundDevice = _devices.firstWhere(
         (d) => d.address == address,
         orElse: () => throw Exception('Device not found'),
       );
@@ -119,31 +122,31 @@ class BluetoothService extends ChangeNotifier {
         
         // Listen for incoming data
         _connection!.input!.listen(
-          (Uint8List data) {
+          (data) {
             String message = String.fromCharCodes(data);
-            _logger.log('Received data: $message');
+            utils_logger.Logger.log('Received data: $message');
             if (_dataCallback != null) {
               _dataCallback!(message);
             }
           },
           onError: (error) {
-            _logger.error('Connection error: $error');
+            utils_logger.Logger.error('Connection error: $error');
             _handleDisconnection();
           },
           onDone: () {
-            _logger.log('Connection closed');
+            utils_logger.Logger.log('Connection closed');
             _handleDisconnection();
           },
         );
         
-        _logger.log('Successfully connected to $address');
+        utils_logger.Logger.log('Successfully connected to $address');
         notifyListeners();
         return true;
       }
       
       return false;
     } catch (e) {
-      _logger.error('Error connecting to device: $e');
+      utils_logger.Logger.error('Error connecting to device: $e');
       return false;
     }
   }
@@ -157,23 +160,23 @@ class BluetoothService extends ChangeNotifier {
 
   Future<bool> sendCommand(String command) async {
     if (!_isConnected || _connection == null) {
-      _logger.error('Not connected to any device');
+      utils_logger.Logger.error('Not connected to any device');
       return false;
     }
 
     try {
-      _logger.log('Sending command: $command');
+      utils_logger.Logger.log('Sending command: $command');
       _connection!.output.add(Uint8List.fromList(command.codeUnits));
       await _connection!.output.allSent;
-      _logger.log('Command sent successfully');
+      utils_logger.Logger.log('Command sent successfully');
       return true;
     } catch (e) {
-      _logger.error('Error sending command: $e');
+      utils_logger.Logger.error('Error sending command: $e');
       return false;
     }
   }
 
-  Future<bool> sendJoystickData(double x, double y, double z) async {
+  Future<bool> sendJoystickData(double x, double y, [double z = 0]) async {
     String command = 'JOYSTICK:$x,$y,$z';
     return await sendCommand(command);
   }
@@ -190,10 +193,10 @@ class BluetoothService extends ChangeNotifier {
       }
       _isConnected = false;
       _connectedDeviceAddress = null;
-      _logger.log('Disconnected from Bluetooth device');
+      utils_logger.Logger.log('Disconnected from Bluetooth device');
       notifyListeners();
     } catch (e) {
-      _logger.error('Error disconnecting: $e');
+      utils_logger.Logger.error('Error disconnecting: $e');
     }
   }
 

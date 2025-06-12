@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/bluetooth_service.dart';
 import '../services/connection_service.dart';
@@ -47,22 +48,22 @@ class CarControlProvider with ChangeNotifier {
     notifyListeners();
   }  // Scan for Bluetooth devices
   Future<List<BluetoothDevice>> scanBluetoothDevices() async {
-    utils_logger.Logger().log('Starting Bluetooth device scan...');
+    utils_logger.Logger.log('Starting Bluetooth device scan...');
     _setConnectionStatus(ConnectionStatus.connecting);
     
     try {
       // Check if Bluetooth is enabled
-      bool isEnabled = await BluetoothService().requestBluetoothEnable();
+      bool isEnabled = await _bluetoothService.requestBluetoothEnable();
       if (!isEnabled) {
-        utils_logger.Logger().log('Bluetooth not enabled, requesting enable...');
-        bool enabled = await BluetoothService().requestBluetoothEnable();
+        utils_logger.Logger.log('Bluetooth not enabled, requesting enable...');
+        bool enabled = await _bluetoothService.requestBluetoothEnable();
         if (!enabled) {
           throw Exception('Bluetooth must be enabled to scan for devices');
         }
       }
 
-      List<BluetoothDevice> devices = await BluetoothService.scanForDevices();
-      Logger.log('Found ${devices.length} Bluetooth devices');
+      List<BluetoothDevice> devices = await _bluetoothService.scanForDevices();
+      utils_logger.Logger.log('Found ${devices.length} Bluetooth devices');
       
       _setConnectionStatus(ConnectionStatus.disconnected);
       return devices;
@@ -75,23 +76,28 @@ class CarControlProvider with ChangeNotifier {
 
   // Connect to Bluetooth device
   Future<bool> connectBluetooth(String address) async {
-    Logger.log('Connecting to Bluetooth device: $address');
+    utils_logger.Logger.log('Connecting to Bluetooth device: $address');
     _setConnectionStatus(ConnectionStatus.connecting);
     
     try {
       // Set up sensor data callback before connecting
-      BluetoothService.setDataCallback((data) {
-        _handleSensorData(data);
+      _bluetoothService.setDataCallback((data) {
+        try {
+          final Map<String, dynamic> jsonData = json.decode(data) as Map<String, dynamic>;
+          _handleSensorData(jsonData);
+        } catch (e) {
+          utils_logger.Logger.error('Error decoding sensor data: $e');
+        }
       });
 
-      bool connected = await BluetoothService.connectToDevice(address);
+      bool connected = await _bluetoothService.connectToDevice(address);
       
       if (connected) {
         _setConnectionStatus(ConnectionStatus.connected);
-        Logger.log('Successfully connected to Bluetooth device');
+        utils_logger.Logger.log('Successfully connected to Bluetooth device');
         
         // Send initial power on command
-        await BluetoothService.sendCommand('power', true);
+        await _bluetoothService.sendCommand('POWER:1');
         
         return true;
       } else {
@@ -107,7 +113,7 @@ class CarControlProvider with ChangeNotifier {
 
   // Connect to ESP32-CAM WiFi
   Future<bool> connectCamera(String ipAddress, int port) async {
-    Logger.log('Connecting to camera at $ipAddress:$port');
+    utils_logger.Logger.log('Connecting to camera at $ipAddress:$port');
     _setConnectionStatus(ConnectionStatus.connecting);
     
     try {
@@ -115,7 +121,7 @@ class CarControlProvider with ChangeNotifier {
       
       if (connected) {
         _cameraUrl = ConnectionService.getMjpegStreamUrl();
-        Logger.log('Successfully connected to camera: $_cameraUrl');
+        utils_logger.Logger.log('Successfully connected to camera: $_cameraUrl');
         notifyListeners();
         return true;
       } else {
@@ -132,39 +138,38 @@ class CarControlProvider with ChangeNotifier {
   // Disconnect from camera
   void disconnectCamera() {
     ConnectionService.disconnect();
-    _cameraUrl = '';
-    Logger.log('Disconnected from camera');
+    utils_logger.Logger.log('Disconnected from camera');
     notifyListeners();
   }
 
   // Send joystick data
   Future<bool> sendJoystickData(double x, double y) async {
     if (!isConnected) {
-      Logger.log('Cannot send joystick data: not connected');
+      utils_logger.Logger.log('Cannot send joystick data: not connected');
       return false;
     }
 
-    return await BluetoothService.sendJoystickData(x, y);
+    return await _bluetoothService.sendJoystickData(x, y);
   }
 
   // Send power command
   Future<bool> sendPowerCommand(bool enabled) async {
     if (!isConnected) {
-      Logger.log('Cannot send power command: not connected');
+      utils_logger.Logger.log('Cannot send power command: not connected');
       return false;
     }
 
-    return await BluetoothService.sendCommand('power', enabled);
+    return await _bluetoothService.sendCommand('POWER:${enabled?1:0}');
   }
 
   // Send mode command
   Future<bool> sendModeCommand(bool autoMode) async {
     if (!isConnected) {
-      Logger.log('Cannot send mode command: not connected');
+      utils_logger.Logger.log('Cannot send mode command: not connected');
       return false;
     }
 
-    return await BluetoothService.sendCommand('mode', autoMode);
+    return await _bluetoothService.sendCommand('MODE:${autoMode?1:0}');
   }
 
   // Start gyroscope monitoring
@@ -186,7 +191,7 @@ class CarControlProvider with ChangeNotifier {
 
   // Disconnect
   Future<void> disconnect() async {
-    Logger.log('Disconnecting from all services...');
+    utils_logger.Logger.log('Disconnecting from all services...');
     
     try {
       // Stop gyroscope
@@ -194,17 +199,17 @@ class CarControlProvider with ChangeNotifier {
       
       // Send power off command before disconnecting
       if (isConnected) {
-        await BluetoothService.sendCommand('power', false);
+        await _bluetoothService.sendCommand('POWER:0');
         await Future.delayed(const Duration(milliseconds: 100));
       }
         // Disconnect Bluetooth
-      await BluetoothService.disconnect();
+      await _bluetoothService.disconnect();
       
       _setConnectionStatus(ConnectionStatus.disconnected);
       _sensorData = SensorData(); // Reset to default values
       
     } catch (e) {
-      Logger.log('Error during disconnect: $e');
+      utils_logger.Logger.log('Error during disconnect: $e');
     }
   }
   
@@ -257,11 +262,11 @@ class CarControlProvider with ChangeNotifier {
         timestamp: DateTime.now(),
       );
       
-      Logger.log('Updated sensor data: distance=${_sensorData.distance}, temp=${_sensorData.temperature}, humidity=${_sensorData.humidity}');
+      utils_logger.Logger.log('Updated sensor data: distance=${_sensorData.distance}, temp=${_sensorData.temperature}, humidity=${_sensorData.humidity}');
       notifyListeners();
       
     } catch (e) {
-      Logger.log('Error parsing sensor data: $e');
+      utils_logger.Logger.log('Error parsing sensor data: $e');
     }
   }
 
@@ -277,14 +282,14 @@ class CarControlProvider with ChangeNotifier {
   void _setError(String error) {
     _errorMessage = error;
     _connectionStatus = ConnectionStatus.error;
-    Logger.log('Error: $error');
+    utils_logger.Logger.log('Error: $error');
     notifyListeners();
   }
 
   @override
   void dispose() {
     stopGyroscopeControl();
-    BluetoothService.disconnect();
+    _bluetoothService.disconnect();
     super.dispose();
   }
 }
