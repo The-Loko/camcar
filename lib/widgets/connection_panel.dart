@@ -96,8 +96,7 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
           ),
           
           const SizedBox(height: 20),
-          
-          // Bluetooth Section
+            // Bluetooth Section
           if (!isConnected) ...[
             _buildIOSButton(
               label: 'Scan for Devices',
@@ -110,7 +109,8 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             ),
             const SizedBox(height: 12),
           ],
-            // WiFi Section for Camera
+          
+          // WiFi Section for Camera
           _buildIOSTextField(
             controller: _ipController,
             label: 'Camera IP Address',
@@ -121,7 +121,8 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             controller: _portController,
             label: 'Port',
             placeholder: '80',
-            keyboardType: TextInputType.number,          ),
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 16),
           _buildIOSButton(
             label: 'Connect Camera',
@@ -133,7 +134,6 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             },
           ),
           const SizedBox(height: 20),
-          ],
           
           // Main Action Button
           _buildIOSButton(
