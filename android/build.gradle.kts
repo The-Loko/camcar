@@ -22,6 +22,8 @@ subprojects {
         extensions.configure<LibraryExtension> {
             // match the plugin's package in its AndroidManifest.xml
             namespace = "com.github.andreociocca.flutter_bluetooth_serial"
+            // ensure resources link against API 33 (lStar introduced in API 31)
+            compileSdk = 33
         }
     }
 }
