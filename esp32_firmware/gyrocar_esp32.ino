@@ -205,7 +205,7 @@ void handleBluetoothData() {
     // Expect {"cmd":"power","value":true} or {"cmd":"mode","value":false}
     char cmd[16];
     bool val = false;
-    if (sscanf(jsonData.c_str(), "{\"cmd\":\"%[^"]\",\"value\":%d}", cmd, (int*)&val) >= 1) {
+    if (sscanf(jsonData.c_str(), "{\"cmd\":\"%[^\"]\",\"value\":%d}", cmd, (int*)&val) >= 1) {
       String command = String(cmd);
       if (command == "power") {
         if (val) {
