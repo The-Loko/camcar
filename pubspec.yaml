@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   sensors_plus: ^6.1.1  # For gyroscope data
-  flutter_bluetooth_classic_serial: ^1.0.3  # For Bluetooth Classic (ESP32 compatible)
+  flutter_bluetooth_serial: ^0.4.0  # For Bluetooth Classic (ESP32 compatible)
   shared_preferences: ^2.2.2  # For saving settings
   provider: ^6.1.1  # For state management
   cupertino_icons: ^1.0.6

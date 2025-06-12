@@ -25,13 +25,15 @@ class CarControlProvider with ChangeNotifier {
   
   // Gyroscope service
   final GyroscopeService _gyroscopeService = GyroscopeService();
-
+  
+  // Bluetooth service instance
+  final BluetoothService _bluetoothService = BluetoothService();
   // Getters
   ConnectionStatus get connectionStatus => _connectionStatus;
   String get errorMessage => _errorMessage ?? '';
   String get cameraUrl => _cameraUrl ?? '';
   SensorData get sensorData => _sensorData;
-  bool get isConnected => BluetoothService.isConnected;
+  bool get isConnected => _bluetoothService.isConnected;
   
   // Car control getters
   bool get isPowerOn => _isPowerOn;
