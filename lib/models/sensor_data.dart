@@ -1,22 +1,20 @@
-// filepath: d:\Devs\Nihal\camcar\lib\models\sensor_data.dart
 class SensorData {
-  final double? distance;
-  final double? temperature;
-  final double? humidity;
-  final DateTime? timestamp;
+  final double distance;
+  final double temperature;
+  final double humidity;
+  final DateTime timestamp;
 
   SensorData({
-    this.distance,
-    this.temperature,
-    this.humidity,
-    this.timestamp,
-  });
-
+    this.distance = 0.0,
+    this.temperature = 0.0,
+    this.humidity = 0.0,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
   factory SensorData.fromJson(Map<String, dynamic> json) {
     return SensorData(
-      distance: (json['distance'] as num?)?.toDouble(),
-      temperature: (json['temperature'] as num?)?.toDouble(),
-      humidity: (json['humidity'] as num?)?.toDouble(),
+      distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
+      temperature: (json['temperature'] as num?)?.toDouble() ?? 0.0,
+      humidity: (json['humidity'] as num?)?.toDouble() ?? 0.0,
       timestamp: DateTime.now(),
     );
   }

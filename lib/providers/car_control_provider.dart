@@ -12,18 +12,16 @@ class CarControlProvider with ChangeNotifier {
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
   String? _errorMessage;
   String? _cameraUrl;
-  
-  // Sensor data from ESP32
-  SensorData? _sensorData;
+    // Sensor data from ESP32
+  SensorData _sensorData = SensorData();
   
   // Gyroscope service
   final GyroscopeService _gyroscopeService = GyroscopeService();
 
   // Getters
-  ConnectionStatus get connectionStatus => _connectionStatus;
-  String? get errorMessage => _errorMessage;
-  String? get cameraUrl => _cameraUrl;
-  SensorData? get sensorData => _sensorData;
+  ConnectionStatus get connectionStatus => _connectionStatus;  String get errorMessage => _errorMessage ?? '';
+  String get cameraUrl => _cameraUrl ?? '';
+  SensorData get sensorData => _sensorData;
   bool get isConnected => BluetoothService.isConnected;
 
   // Set camera URL (no connection needed, just for streaming)
@@ -151,29 +149,27 @@ class CarControlProvider with ChangeNotifier {
         await BluetoothService.sendCommand('power', false);
         await Future.delayed(const Duration(milliseconds: 100));
       }
-      
-      // Disconnect Bluetooth
+        // Disconnect Bluetooth
       await BluetoothService.disconnect();
       
       _setConnectionStatus(ConnectionStatus.disconnected);
-      _sensorData = null;
+      _sensorData = SensorData(); // Reset to default values
       
     } catch (e) {
       Logger.log('Error during disconnect: $e');
     }
   }
-
   // Handle incoming sensor data from ESP32
   void _handleSensorData(Map<String, dynamic> data) {
     try {
       _sensorData = SensorData(
-        distance: (data['distance'] as num?)?.toDouble(),
-        temperature: (data['temperature'] as num?)?.toDouble(),
-        humidity: (data['humidity'] as num?)?.toDouble(),
+        distance: (data['distance'] as num?)?.toDouble() ?? 0.0,
+        temperature: (data['temperature'] as num?)?.toDouble() ?? 0.0,
+        humidity: (data['humidity'] as num?)?.toDouble() ?? 0.0,
         timestamp: DateTime.now(),
       );
       
-      Logger.log('Updated sensor data: distance=${_sensorData?.distance}, temp=${_sensorData?.temperature}, humidity=${_sensorData?.humidity}');
+      Logger.log('Updated sensor data: distance=${_sensorData.distance}, temp=${_sensorData.temperature}, humidity=${_sensorData.humidity}');
       notifyListeners();
       
     } catch (e) {
