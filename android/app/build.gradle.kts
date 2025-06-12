@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.myapp"
-    compileSdk = 34 // Override to support lStar attribute
+    compileSdk = 35 // Updated to support shared_preferences_android and lStar attribute
     ndkVersion = "27.0.12077973"   // override to highest required NDK
 
     compileOptions {
@@ -25,7 +25,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = 34 // Override to support lStar attribute
+        targetSdk = 35 // Updated to support shared_preferences_android
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
