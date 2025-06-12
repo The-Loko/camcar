@@ -122,18 +122,18 @@ class _ConnectionPanelState extends State<ConnectionPanel> {
             controller: _portController,
             label: 'Port',
             placeholder: '80',
-            keyboardType: TextInputType.number,
-          ),
+            keyboardType: TextInputType.number,          ),
           const SizedBox(height: 16),
           _buildIOSButton(
             label: 'Connect Camera',
-              color: const Color(0xFF007aff),              onPressed: () async {
-                final ip = _ipController.text.trim();
-                final port = int.tryParse(_portController.text.trim()) ?? 80;
-                await provider.connectCamera(ip, port);
-              },
-            ),
-            const SizedBox(height: 20),
+            color: const Color(0xFF007aff),
+            onPressed: () async {
+              final ip = _ipController.text.trim();
+              final port = int.tryParse(_portController.text.trim()) ?? 80;
+              await provider.connectCamera(ip, port);
+            },
+          ),
+          const SizedBox(height: 20),
           ],
           
           // Main Action Button

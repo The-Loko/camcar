@@ -239,11 +239,11 @@ class CarControlProvider with ChangeNotifier {
   Future<bool> sendJoystick(double x, double y) async {
     return await sendJoystickData(x, y);
   }
-  
-  // Get last control data (for UI display)
+    // Get last control data (for UI display)
   Map<String, double> get lastControlData => {
     'x': 0.0, // Would store last joystick X value
     'y': 0.0, // Would store last joystick Y value
+    'z': 0.0, // Would store last gyro Z value if needed
   };
 
   // Handle incoming sensor data from ESP32

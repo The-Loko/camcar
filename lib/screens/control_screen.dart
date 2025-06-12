@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/car_control_provider.dart';
-import '../services/connection_service.dart';
 import '../widgets/mjpeg_viewer.dart';
 import '../widgets/joystick.dart';
 import 'connection_screen.dart';

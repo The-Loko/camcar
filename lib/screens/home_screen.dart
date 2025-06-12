@@ -5,7 +5,6 @@ import '../widgets/connection_panel.dart';
 import '../utils/constants.dart';
 import '../widgets/mjpeg_viewer.dart';
 import '../widgets/joystick.dart';
-import '../services/connection_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

@@ -88,9 +88,8 @@ class ControlPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            
-            // Current values display
-            if (provider.lastControlData != null && provider.isControlActive) ...[
+              // Current values display
+            if (provider.isControlActive) ...[
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -106,17 +105,16 @@ class ControlPanel extends StatelessWidget {
                         color: AppColors.secondaryColor,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'X: ${(provider.lastControlData!.x * provider.sensitivity).toStringAsFixed(2)}',
+                    const SizedBox(height: 4),                    Text(
+                      'X: ${(provider.lastControlData['x']! * provider.sensitivity).toStringAsFixed(2)}',
                       style: const TextStyle(color: AppColors.secondaryColor),
                     ),
                     Text(
-                      'Y: ${(provider.lastControlData!.y * provider.sensitivity).toStringAsFixed(2)}',
+                      'Y: ${(provider.lastControlData['y']! * provider.sensitivity).toStringAsFixed(2)}',
                       style: const TextStyle(color: AppColors.secondaryColor),
                     ),
                     Text(
-                      'Z: ${(provider.lastControlData!.z * provider.sensitivity).toStringAsFixed(2)}',
+                      'Z: ${(provider.lastControlData['z'] ?? 0.0 * provider.sensitivity).toStringAsFixed(2)}',
                       style: const TextStyle(color: AppColors.secondaryColor),
                     ),
                   ],
